@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/0226zy/protoforge/agent-runtime/internal/domain/entity"
-	"github.com/0226zy/protoforge/agent-runtime/internal/domain/port"
+	"github.com/0226zy/tenon/agent-runtime/internal/domain/entity"
+	"github.com/0226zy/tenon/agent-runtime/internal/domain/port"
 )
 
 // §5.3 命令语义解析：合法命令参数中嵌套危险载荷也必须被识别。

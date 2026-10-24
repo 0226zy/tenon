@@ -18,12 +18,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/0226zy/protoforge/agent-runtime/internal/application/project"
-	"github.com/0226zy/protoforge/agent-runtime/internal/application/session"
-	"github.com/0226zy/protoforge/agent-runtime/internal/domain/derr"
-	"github.com/0226zy/protoforge/agent-runtime/internal/domain/entity"
-	"github.com/0226zy/protoforge/agent-runtime/internal/domain/plugin"
-	"github.com/0226zy/protoforge/agent-runtime/internal/domain/port"
+	"github.com/0226zy/tenon/agent-runtime/internal/application/project"
+	"github.com/0226zy/tenon/agent-runtime/internal/application/session"
+	"github.com/0226zy/tenon/agent-runtime/internal/domain/derr"
+	"github.com/0226zy/tenon/agent-runtime/internal/domain/entity"
+	"github.com/0226zy/tenon/agent-runtime/internal/domain/plugin"
+	"github.com/0226zy/tenon/agent-runtime/internal/domain/port"
 )
 
 const maxRequestBodyBytes = 1 << 20

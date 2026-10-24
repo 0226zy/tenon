@@ -14,12 +14,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/0226zy/protoforge/internal/wsd/bus"
-	"github.com/0226zy/protoforge/internal/wsd/cpclient"
-	"github.com/0226zy/protoforge/internal/wsd/disk"
-	"github.com/0226zy/protoforge/internal/wsd/gate"
-	procregistry "github.com/0226zy/protoforge/internal/wsd/proc"
-	"github.com/0226zy/protoforge/pkg/contract"
+	"github.com/0226zy/tenon/internal/wsd/bus"
+	"github.com/0226zy/tenon/internal/wsd/cpclient"
+	"github.com/0226zy/tenon/internal/wsd/disk"
+	"github.com/0226zy/tenon/internal/wsd/gate"
+	procregistry "github.com/0226zy/tenon/internal/wsd/proc"
+	"github.com/0226zy/tenon/pkg/contract"
 )
 
 var ErrNoPreview = errors.New("no preview has been requested")

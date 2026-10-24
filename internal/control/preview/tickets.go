@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/0226zy/protoforge/internal/kit/secret"
+	"github.com/0226zy/tenon/internal/kit/secret"
 )
 
 type ticketPayload struct {

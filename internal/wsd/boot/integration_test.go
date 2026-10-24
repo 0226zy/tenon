@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0226zy/protoforge/pkg/contract"
+	"github.com/0226zy/tenon/pkg/contract"
 	"gopkg.in/yaml.v3"
 )
 

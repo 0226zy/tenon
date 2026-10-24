@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0226zy/protoforge/agent-runtime/internal/domain/derr"
-	"github.com/0226zy/protoforge/agent-runtime/internal/domain/entity"
-	"github.com/0226zy/protoforge/agent-runtime/internal/domain/port"
+	"github.com/0226zy/tenon/agent-runtime/internal/domain/derr"
+	"github.com/0226zy/tenon/agent-runtime/internal/domain/entity"
+	"github.com/0226zy/tenon/agent-runtime/internal/domain/port"
 )
 
 // ── 测试桩 ───────────────────────────────────────────────────────

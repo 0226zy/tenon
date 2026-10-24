@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/0226zy/protoforge/internal/control/store"
+	"github.com/0226zy/tenon/internal/control/store"
 )
 
 type UsageService struct{ St *store.Store }

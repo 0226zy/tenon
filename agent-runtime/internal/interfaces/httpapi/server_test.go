@@ -13,15 +13,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0226zy/protoforge/agent-runtime/internal/application/agent"
-	"github.com/0226zy/protoforge/agent-runtime/internal/application/project"
-	"github.com/0226zy/protoforge/agent-runtime/internal/application/session"
-	"github.com/0226zy/protoforge/agent-runtime/internal/domain/entity"
-	"github.com/0226zy/protoforge/agent-runtime/internal/domain/plugin"
-	"github.com/0226zy/protoforge/agent-runtime/internal/domain/port"
-	"github.com/0226zy/protoforge/agent-runtime/internal/infrastructure/adapter/llminfo"
-	"github.com/0226zy/protoforge/agent-runtime/internal/infrastructure/adapter/policy"
-	"github.com/0226zy/protoforge/agent-runtime/internal/infrastructure/adapter/storejsonl"
+	"github.com/0226zy/tenon/agent-runtime/internal/application/agent"
+	"github.com/0226zy/tenon/agent-runtime/internal/application/project"
+	"github.com/0226zy/tenon/agent-runtime/internal/application/session"
+	"github.com/0226zy/tenon/agent-runtime/internal/domain/entity"
+	"github.com/0226zy/tenon/agent-runtime/internal/domain/plugin"
+	"github.com/0226zy/tenon/agent-runtime/internal/domain/port"
+	"github.com/0226zy/tenon/agent-runtime/internal/infrastructure/adapter/llminfo"
+	"github.com/0226zy/tenon/agent-runtime/internal/infrastructure/adapter/policy"
+	"github.com/0226zy/tenon/agent-runtime/internal/infrastructure/adapter/storejsonl"
 )
 
 // ── 测试桩 ──────────────────────────────────────────────────────

@@ -7,11 +7,11 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/0226zy/protoforge/internal/control/event"
-	"github.com/0226zy/protoforge/internal/control/store"
-	"github.com/0226zy/protoforge/internal/kit/httpx"
-	"github.com/0226zy/protoforge/internal/kit/idgen"
-	"github.com/0226zy/protoforge/pkg/contract"
+	"github.com/0226zy/tenon/internal/control/event"
+	"github.com/0226zy/tenon/internal/control/store"
+	"github.com/0226zy/tenon/internal/kit/httpx"
+	"github.com/0226zy/tenon/internal/kit/idgen"
+	"github.com/0226zy/tenon/pkg/contract"
 )
 
 type conversationCatalog struct{}

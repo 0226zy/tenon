@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/0226zy/protoforge/agent-runtime/internal/domain/port"
-	"github.com/0226zy/protoforge/agent-runtime/internal/infrastructure/config"
+	"github.com/0226zy/tenon/agent-runtime/internal/domain/port"
+	"github.com/0226zy/tenon/agent-runtime/internal/infrastructure/config"
 )
 
 func TestBuildPropagatesFileAndSearchByteLimits(t *testing.T) {

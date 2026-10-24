@@ -14,8 +14,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0226zy/protoforge/internal/control/app"
-	"github.com/0226zy/protoforge/internal/kit/config"
+	"github.com/0226zy/tenon/internal/control/app"
+	"github.com/0226zy/tenon/internal/kit/config"
 )
 
 func testConfigFile(t *testing.T) string {

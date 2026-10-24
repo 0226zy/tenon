@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/0226zy/protoforge/internal/wsd/bus"
-	"github.com/0226zy/protoforge/internal/wsd/gate"
-	"github.com/0226zy/protoforge/pkg/contract"
+	"github.com/0226zy/tenon/internal/wsd/bus"
+	"github.com/0226zy/tenon/internal/wsd/gate"
+	"github.com/0226zy/tenon/pkg/contract"
 )
 
 func TestCommitIdempotencyAndLog(t *testing.T) {

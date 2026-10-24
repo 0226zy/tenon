@@ -11,14 +11,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0226zy/protoforge/internal/control/llm"
-	"github.com/0226zy/protoforge/internal/control/quota"
-	"github.com/0226zy/protoforge/internal/control/sandbox"
-	"github.com/0226zy/protoforge/internal/control/store"
-	"github.com/0226zy/protoforge/internal/kit/config"
-	"github.com/0226zy/protoforge/internal/kit/idgen"
-	"github.com/0226zy/protoforge/internal/kit/secret"
-	"github.com/0226zy/protoforge/pkg/contract"
+	"github.com/0226zy/tenon/internal/control/llm"
+	"github.com/0226zy/tenon/internal/control/quota"
+	"github.com/0226zy/tenon/internal/control/sandbox"
+	"github.com/0226zy/tenon/internal/control/store"
+	"github.com/0226zy/tenon/internal/kit/config"
+	"github.com/0226zy/tenon/internal/kit/idgen"
+	"github.com/0226zy/tenon/internal/kit/secret"
+	"github.com/0226zy/tenon/pkg/contract"
 )
 
 func TestSandboxConfigBuildAndLLMAuthorization(t *testing.T) {

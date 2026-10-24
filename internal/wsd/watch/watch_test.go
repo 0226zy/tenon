@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0226zy/protoforge/internal/wsd/bus"
+	"github.com/0226zy/tenon/internal/wsd/bus"
 )
 
 func TestFileChangesAreDebouncedAndMerged(t *testing.T) {

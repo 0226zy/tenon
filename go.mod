@@ -1,4 +1,4 @@
-module github.com/0226zy/protoforge
+module github.com/0226zy/tenon
 
 go 1.25.0
 

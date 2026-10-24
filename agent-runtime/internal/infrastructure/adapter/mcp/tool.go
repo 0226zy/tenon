@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/0226zy/protoforge/agent-runtime/internal/domain/entity"
-	"github.com/0226zy/protoforge/agent-runtime/internal/domain/port"
+	"github.com/0226zy/tenon/agent-runtime/internal/domain/entity"
+	"github.com/0226zy/tenon/agent-runtime/internal/domain/port"
 )
 
 // toolAdapter 把一件远端 MCP 工具适配为 port.Tool。

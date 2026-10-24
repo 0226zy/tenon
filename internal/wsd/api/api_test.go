@@ -12,9 +12,9 @@ import (
 	"strings"
 	"testing"
 
-	workspacefs "github.com/0226zy/protoforge/internal/wsd/fs"
-	"github.com/0226zy/protoforge/internal/wsd/gate"
-	"github.com/0226zy/protoforge/pkg/contract"
+	workspacefs "github.com/0226zy/tenon/internal/wsd/fs"
+	"github.com/0226zy/tenon/internal/wsd/gate"
+	"github.com/0226zy/tenon/pkg/contract"
 )
 
 func TestRecovererPreservesStreamAbortSentinel(t *testing.T) {

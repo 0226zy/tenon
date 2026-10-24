@@ -1,12 +1,12 @@
-# ProtoForge 原型工坊：架构与实施基线
+# Tenon 原型工坊：架构与实施基线
 
 ## 项目决策
 
-- 仓库名：`protoforge`
-- 根 Go module：`github.com/0226zy/protoforge`
-- Runtime：仓库内 `agent-runtime/` 独立模块（`github.com/0226zy/protoforge/agent-runtime`），保留 ReAct、工具、事件日志和技能体系，并完成 S1–S10 改造。
+- 仓库名：`tenon`
+- 根 Go module：`github.com/0226zy/tenon`
+- Runtime：仓库内 `agent-runtime/` 独立模块（`github.com/0226zy/tenon/agent-runtime`），保留 ReAct、工具、事件日志和技能体系，并完成 S1–S10 改造。
 - 控制层：`cmd/control`，按 C0–C16 分包；wsd：`cmd/wsd` 与 `internal/wsd`。
-- ProtoForge Web：Vue 3 + TypeScript + Pinia + Monaco；生成应用模板：React + Go + SQLite。
+- Tenon Web：Vue 3 + TypeScript + Pinia + Monaco；生成应用模板：React + Go + SQLite。
 - 共享跨进程 DTO 只放在 `pkg/contract`，前端 `web/src/types/contract.ts` 与其对齐。
 
 ## 主链路

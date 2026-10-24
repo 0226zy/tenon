@@ -3,7 +3,7 @@ package storejsonl
 import (
 	"testing"
 
-	"github.com/0226zy/protoforge/agent-runtime/internal/domain/entity"
+	"github.com/0226zy/tenon/agent-runtime/internal/domain/entity"
 )
 
 func newStore(t *testing.T) *Store {

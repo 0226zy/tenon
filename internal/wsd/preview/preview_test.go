@@ -16,11 +16,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0226zy/protoforge/internal/wsd/bus"
-	"github.com/0226zy/protoforge/internal/wsd/cpclient"
-	"github.com/0226zy/protoforge/internal/wsd/gate"
-	"github.com/0226zy/protoforge/internal/wsd/proc"
-	"github.com/0226zy/protoforge/pkg/contract"
+	"github.com/0226zy/tenon/internal/wsd/bus"
+	"github.com/0226zy/tenon/internal/wsd/cpclient"
+	"github.com/0226zy/tenon/internal/wsd/gate"
+	"github.com/0226zy/tenon/internal/wsd/proc"
+	"github.com/0226zy/tenon/pkg/contract"
 )
 
 type fakeBuildControl struct {

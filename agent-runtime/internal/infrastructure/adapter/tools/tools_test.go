@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0226zy/protoforge/agent-runtime/internal/domain/entity"
-	"github.com/0226zy/protoforge/agent-runtime/internal/domain/port"
+	"github.com/0226zy/tenon/agent-runtime/internal/domain/entity"
+	"github.com/0226zy/tenon/agent-runtime/internal/domain/port"
 )
 
 // testCtx 构造指向临时目录的 ToolContext。

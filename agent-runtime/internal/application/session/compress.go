@@ -3,7 +3,7 @@ package session
 import (
 	"fmt"
 
-	"github.com/0226zy/protoforge/agent-runtime/internal/domain/entity"
+	"github.com/0226zy/tenon/agent-runtime/internal/domain/entity"
 )
 
 // 上下文投影压缩（评审 P1：上下文压缩，与 spill、task 互补）。

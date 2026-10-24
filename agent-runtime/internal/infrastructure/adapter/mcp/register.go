@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/0226zy/protoforge/agent-runtime/internal/domain/plugin"
+	"github.com/0226zy/tenon/agent-runtime/internal/domain/plugin"
 )
 
 // RegisterServers 按配置启动全部 MCP server，把它们的工具注册进注册表。

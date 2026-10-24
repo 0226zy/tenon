@@ -1,4 +1,4 @@
-module github.com/0226zy/protoforge/agent-runtime
+module github.com/0226zy/tenon/agent-runtime
 
 go 1.25.0
 

@@ -1,6 +1,6 @@
 ---
 name: platform-contract
-description: ProtoForge 原型工坊的强制工程、预览与安全约定。任何生成或修改应用的动手操作前必须加载。
+description: Tenon 原型工坊的强制工程、预览与安全约定。任何生成或修改应用的动手操作前必须加载。
 ---
 
 # 平台约定（强制）

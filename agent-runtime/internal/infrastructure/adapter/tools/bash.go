@@ -17,8 +17,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/0226zy/protoforge/agent-runtime/internal/domain/entity"
-	"github.com/0226zy/protoforge/agent-runtime/internal/domain/port"
+	"github.com/0226zy/tenon/agent-runtime/internal/domain/entity"
+	"github.com/0226zy/tenon/agent-runtime/internal/domain/port"
 )
 
 var errShellDied = errors.New("bash 会话已终止")

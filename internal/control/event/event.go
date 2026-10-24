@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/0226zy/protoforge/internal/control/store"
-	"github.com/0226zy/protoforge/pkg/contract"
+	"github.com/0226zy/tenon/internal/control/store"
+	"github.com/0226zy/tenon/pkg/contract"
 )
 
 type Subscription struct {

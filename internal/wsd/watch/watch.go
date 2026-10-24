@@ -10,8 +10,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/0226zy/protoforge/internal/wsd/bus"
-	workspacefs "github.com/0226zy/protoforge/internal/wsd/fs"
+	"github.com/0226zy/tenon/internal/wsd/bus"
+	workspacefs "github.com/0226zy/tenon/internal/wsd/fs"
 )
 
 const maxWatches = 8192

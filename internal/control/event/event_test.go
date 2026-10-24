@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0226zy/protoforge/internal/control/store"
+	"github.com/0226zy/tenon/internal/control/store"
 )
 
 func eventTestStore(t *testing.T) (*store.Store, string) {

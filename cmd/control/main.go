@@ -11,10 +11,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/0226zy/protoforge/internal/control/auth"
-	"github.com/0226zy/protoforge/internal/control/store"
-	"github.com/0226zy/protoforge/internal/kit/config"
-	"github.com/0226zy/protoforge/internal/kit/idgen"
+	"github.com/0226zy/tenon/internal/control/auth"
+	"github.com/0226zy/tenon/internal/control/store"
+	"github.com/0226zy/tenon/internal/kit/config"
+	"github.com/0226zy/tenon/internal/kit/idgen"
 )
 
 func main() { os.Exit(execute(context.Background(), os.Args[1:], os.Stdout, os.Stderr)) }
@@ -61,7 +61,7 @@ func execute(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 }
 
 func printUsage(w io.Writer) {
-	fmt.Fprintln(w, `control - protoforge control plane
+	fmt.Fprintln(w, `control - tenon control plane
 
 Usage:
   control serve -config deploy/control.local.yaml

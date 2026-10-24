@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/0226zy/protoforge/internal/wsd/boot"
+	"github.com/0226zy/tenon/internal/wsd/boot"
 )
 
 func main() {

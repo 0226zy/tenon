@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/0226zy/protoforge/pkg/contract"
+	"github.com/0226zy/tenon/pkg/contract"
 )
 
 const runColumns = `Fid,Frun_id,Fconv_id,Fuser_id,Frequest_id,Finput_hash,Fmodel,Fstatus,Factive,Fgeneration,Fcancel_req,Fstop_confirmed,Fcheckpoint_status,Fcommit,Frt_seq_start,Frt_seq_end,Fiterations,Fprompt_tokens,Fcompl_tokens,Ferror_code,Ferror_msg,Fstart_time,Fend_time,Fcreate_time,Fmodify_time`

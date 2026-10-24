@@ -1,6 +1,6 @@
-# ProtoForge Web
+# Tenon Web
 
-ProtoForge 的 P0 Web 前端，使用 Vue 3、Vite、TypeScript、Pinia 和只读 Monaco Editor。
+Tenon 的 P0 Web 前端，使用 Vue 3、Vite、TypeScript、Pinia 和只读 Monaco Editor。
 
 ## 环境要求
 

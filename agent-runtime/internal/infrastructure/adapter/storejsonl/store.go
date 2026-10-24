@@ -24,8 +24,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/0226zy/protoforge/agent-runtime/internal/domain/derr"
-	"github.com/0226zy/protoforge/agent-runtime/internal/domain/entity"
+	"github.com/0226zy/tenon/agent-runtime/internal/domain/derr"
+	"github.com/0226zy/tenon/agent-runtime/internal/domain/entity"
 )
 
 const (

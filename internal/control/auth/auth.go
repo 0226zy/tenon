@@ -15,11 +15,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/0226zy/protoforge/internal/control/store"
-	"github.com/0226zy/protoforge/internal/kit/config"
-	"github.com/0226zy/protoforge/internal/kit/httpx"
-	"github.com/0226zy/protoforge/internal/kit/idgen"
-	"github.com/0226zy/protoforge/internal/kit/secret"
+	"github.com/0226zy/tenon/internal/control/store"
+	"github.com/0226zy/tenon/internal/kit/config"
+	"github.com/0226zy/tenon/internal/kit/httpx"
+	"github.com/0226zy/tenon/internal/kit/idgen"
+	"github.com/0226zy/tenon/internal/kit/secret"
 	"golang.org/x/crypto/argon2"
 )
 

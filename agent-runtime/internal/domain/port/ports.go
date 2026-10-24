@@ -7,7 +7,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/0226zy/protoforge/agent-runtime/internal/domain/entity"
+	"github.com/0226zy/tenon/agent-runtime/internal/domain/entity"
 )
 
 // LLMPort 是模型 chat completion 能力（dsh ctx.llm 的最小等价）。

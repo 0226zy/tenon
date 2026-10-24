@@ -16,9 +16,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/0226zy/protoforge/internal/control/sandbox"
-	"github.com/0226zy/protoforge/internal/kit/config"
-	"github.com/0226zy/protoforge/pkg/contract"
+	"github.com/0226zy/tenon/internal/control/sandbox"
+	"github.com/0226zy/tenon/internal/kit/config"
+	"github.com/0226zy/tenon/pkg/contract"
 )
 
 type Error struct {

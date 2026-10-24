@@ -102,14 +102,14 @@ try {
   }
 
   await page.goto(baseURL, { waitUntil: 'domcontentloaded' })
-  assert.equal(await page.title(), 'ProtoForge · 原型工坊')
-  await page.locator('.login-brand').getByText('ProtoForge', { exact: true }).waitFor()
+  assert.equal(await page.title(), 'Tenon · 原型工坊')
+  await page.locator('.login-brand').getByText('Tenon', { exact: true }).waitFor()
   await page.locator('#username').fill('demo')
   await page.locator('#password').fill(password)
   await page.getByRole('button', { name: '登录', exact: true }).click()
   await page.getByRole('heading', { name: '今天想构建什么？' }).waitFor()
   await page.locator('.sidebar-brand__text').waitFor()
-  assert.match((await page.locator('.sidebar-brand__text').textContent()) || '', /ProtoForge/)
+  assert.match((await page.locator('.sidebar-brand__text').textContent()) || '', /Tenon/)
 
   await page.getByRole('button', { name: /从空白对话开始/ }).click()
   await page.waitForURL(/\/c\/[a-z2-7]{12}$/)

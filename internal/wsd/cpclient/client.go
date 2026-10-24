@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/0226zy/protoforge/pkg/contract"
+	"github.com/0226zy/tenon/pkg/contract"
 )
 
 var ErrBuildBusy = errors.New("build slots are busy")

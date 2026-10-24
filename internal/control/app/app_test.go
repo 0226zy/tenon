@@ -12,10 +12,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0226zy/protoforge/internal/control/store"
-	"github.com/0226zy/protoforge/internal/kit/config"
-	"github.com/0226zy/protoforge/internal/kit/secret"
-	"github.com/0226zy/protoforge/pkg/contract"
+	"github.com/0226zy/tenon/internal/control/store"
+	"github.com/0226zy/tenon/internal/kit/config"
+	"github.com/0226zy/tenon/internal/kit/secret"
+	"github.com/0226zy/tenon/pkg/contract"
 )
 
 func TestAppStartRecoversFinalizingRun(t *testing.T) {
