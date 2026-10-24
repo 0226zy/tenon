@@ -12,8 +12,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/0226zy/proto-platform/migrations"
-	"github.com/0226zy/proto-platform/pkg/contract"
+	"github.com/0226zy/protoforge/migrations"
+	"github.com/0226zy/protoforge/pkg/contract"
 	mysql "github.com/go-sql-driver/mysql"
 	_ "modernc.org/sqlite"
 )

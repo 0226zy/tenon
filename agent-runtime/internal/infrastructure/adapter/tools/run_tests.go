@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/0226zy/proto-platform/agent-runtime/internal/domain/entity"
-	"github.com/0226zy/proto-platform/agent-runtime/internal/domain/port"
+	"github.com/0226zy/protoforge/agent-runtime/internal/domain/entity"
+	"github.com/0226zy/protoforge/agent-runtime/internal/domain/port"
 )
 
 // RunTestsTool 是自验证层（Fix Loop）的执行工具：

@@ -8,11 +8,11 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/0226zy/proto-platform/internal/control/event"
-	"github.com/0226zy/proto-platform/internal/control/store"
-	"github.com/0226zy/proto-platform/internal/kit/httpx"
-	"github.com/0226zy/proto-platform/internal/kit/idgen"
-	"github.com/0226zy/proto-platform/pkg/contract"
+	"github.com/0226zy/protoforge/internal/control/event"
+	"github.com/0226zy/protoforge/internal/control/store"
+	"github.com/0226zy/protoforge/internal/kit/httpx"
+	"github.com/0226zy/protoforge/internal/kit/idgen"
+	"github.com/0226zy/protoforge/pkg/contract"
 )
 
 type Catalog interface {

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0226zy/proto-platform/internal/kit/config"
+	"github.com/0226zy/protoforge/internal/kit/config"
 )
 
 func TestFairRoundRobinAcrossUsers(t *testing.T) {

@@ -16,9 +16,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/0226zy/proto-platform/internal/wsd/bus"
-	"github.com/0226zy/proto-platform/internal/wsd/gate"
-	"github.com/0226zy/proto-platform/pkg/contract"
+	"github.com/0226zy/protoforge/internal/wsd/bus"
+	"github.com/0226zy/protoforge/internal/wsd/gate"
+	"github.com/0226zy/protoforge/pkg/contract"
 )
 
 var validRunID = regexp.MustCompile(`^[A-Za-z0-9_-]{1,128}$`)

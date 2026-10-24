@@ -17,7 +17,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/0226zy/proto-platform/agent-runtime/internal/application/session"
+	"github.com/0226zy/protoforge/agent-runtime/internal/application/session"
 )
 
 // 阶段。

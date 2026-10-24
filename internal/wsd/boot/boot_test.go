@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/0226zy/proto-platform/internal/wsd/proc"
-	"github.com/0226zy/proto-platform/pkg/contract"
+	"github.com/0226zy/protoforge/internal/wsd/proc"
+	"github.com/0226zy/protoforge/pkg/contract"
 )
 
 func TestLoadEnvProductionAndTrustedLocal(t *testing.T) {

@@ -18,8 +18,8 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/0226zy/proto-platform/agent-runtime/internal/domain/entity"
-	"github.com/0226zy/proto-platform/agent-runtime/internal/domain/port"
+	"github.com/0226zy/protoforge/agent-runtime/internal/domain/entity"
+	"github.com/0226zy/protoforge/agent-runtime/internal/domain/port"
 )
 
 // Registry 是插件注册表。并发读安全；注册只允许在组合根启动阶段进行。

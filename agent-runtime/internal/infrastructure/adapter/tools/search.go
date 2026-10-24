@@ -10,8 +10,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/0226zy/proto-platform/agent-runtime/internal/domain/entity"
-	"github.com/0226zy/proto-platform/agent-runtime/internal/domain/port"
+	"github.com/0226zy/protoforge/agent-runtime/internal/domain/entity"
+	"github.com/0226zy/protoforge/agent-runtime/internal/domain/port"
 )
 
 // skipDirs 是 glob/grep 默认跳过的目录（除非模式显式点名）。

@@ -7,8 +7,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/0226zy/proto-platform/agent-runtime/internal/domain/entity"
-	"github.com/0226zy/proto-platform/agent-runtime/internal/domain/port"
+	"github.com/0226zy/protoforge/agent-runtime/internal/domain/entity"
+	"github.com/0226zy/protoforge/agent-runtime/internal/domain/port"
 )
 
 // UseSkillTool 是工程技能的按需加载器（progressive disclosure 的取件口）：

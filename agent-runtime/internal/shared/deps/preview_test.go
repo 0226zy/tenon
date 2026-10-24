@@ -6,8 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/0226zy/proto-platform/agent-runtime/internal/domain/plugin"
-	"github.com/0226zy/proto-platform/agent-runtime/internal/domain/port"
+	"github.com/0226zy/protoforge/agent-runtime/internal/domain/plugin"
+	"github.com/0226zy/protoforge/agent-runtime/internal/domain/port"
 )
 
 func TestRegisterPreviewFromEnv(t *testing.T) {

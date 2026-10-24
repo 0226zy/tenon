@@ -13,9 +13,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0226zy/proto-platform/internal/control/sandbox"
-	"github.com/0226zy/proto-platform/internal/control/store"
-	"github.com/0226zy/proto-platform/internal/kit/config"
+	"github.com/0226zy/protoforge/internal/control/sandbox"
+	"github.com/0226zy/protoforge/internal/control/store"
+	"github.com/0226zy/protoforge/internal/kit/config"
 )
 
 type staticAuthorizer struct {

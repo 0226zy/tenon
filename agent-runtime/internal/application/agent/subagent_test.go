@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0226zy/proto-platform/agent-runtime/internal/domain/entity"
-	"github.com/0226zy/proto-platform/agent-runtime/internal/domain/port"
+	"github.com/0226zy/protoforge/agent-runtime/internal/domain/entity"
+	"github.com/0226zy/protoforge/agent-runtime/internal/domain/port"
 )
 
 // 子代理委派：主循环发起 task 调用 → 子循环在隔离上下文执行 → 结论回传主上下文。

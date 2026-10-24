@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0226zy/proto-platform/pkg/contract"
+	"github.com/0226zy/protoforge/pkg/contract"
 )
 
 func testStore(t *testing.T) *Store {

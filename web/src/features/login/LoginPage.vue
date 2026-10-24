@@ -61,7 +61,7 @@ async function submit(): Promise<void> {
     <section class="login-story">
       <div class="login-brand">
         <span class="brand-mark brand-mark--large"><Braces :size="25" /></span>
-        <span>原型构建平台</span>
+        <span>ProtoForge</span>
       </div>
       <div class="login-story__content">
         <span class="eyebrow"><Sparkles :size="14" /> 从需求到原型，只需一次对话</span>
@@ -78,7 +78,7 @@ async function submit(): Promise<void> {
 
     <section class="login-form-side">
       <form class="login-form" novalidate @submit.prevent="submit">
-        <div class="login-form__mobile-brand"><span class="brand-mark"><Braces :size="20" /></span>原型构建平台</div>
+        <div class="login-form__mobile-brand"><span class="brand-mark"><Braces :size="20" /></span>ProtoForge</div>
         <span class="login-form__kicker">欢迎回来</span>
         <h2>登录你的工作区</h2>
         <p class="login-form__intro">使用平台分配的账号继续</p>

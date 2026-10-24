@@ -1,9 +1,9 @@
-# proto-platform
+# ProtoForge（原型工坊）
 
-「原型构建平台」P0：以自然语言驱动 agent-runtime，在隔离工作区中生成、迭代、查看并预览 React + Go + SQLite 原型。
+ProtoForge 定位为“从需求到可运行原型”：P0 以自然语言驱动 agent-runtime，在隔离工作区中生成、迭代、查看并预览 React + Go + SQLite 原型。
 
-- 根模块：`github.com/0226zy/proto-platform`
-- Runtime：`agent-runtime/`（module `github.com/0226zy/proto-platform/agent-runtime`，保留独立测试边界）
+- 根模块：`github.com/0226zy/protoforge`
+- Runtime：`agent-runtime/`（module `github.com/0226zy/protoforge/agent-runtime`，保留独立测试边界）
 - 控制层：`cmd/control`
 - 工作区守护：`cmd/wsd`
 - 平台前端：`web/`（Vue 3 + TypeScript + Pinia + Monaco）

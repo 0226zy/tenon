@@ -8,11 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0226zy/proto-platform/agent-runtime/internal/application/agent"
-	"github.com/0226zy/proto-platform/agent-runtime/internal/application/session"
-	"github.com/0226zy/proto-platform/agent-runtime/internal/domain/entity"
-	"github.com/0226zy/proto-platform/agent-runtime/internal/domain/port"
-	"github.com/0226zy/proto-platform/agent-runtime/internal/infrastructure/adapter/storejsonl"
+	"github.com/0226zy/protoforge/agent-runtime/internal/application/agent"
+	"github.com/0226zy/protoforge/agent-runtime/internal/application/session"
+	"github.com/0226zy/protoforge/agent-runtime/internal/domain/entity"
+	"github.com/0226zy/protoforge/agent-runtime/internal/domain/port"
+	"github.com/0226zy/protoforge/agent-runtime/internal/infrastructure/adapter/storejsonl"
 )
 
 // recordingLLM 记录每次调用的消息序列，返回固定回答（无工具调用 → 回合一轮结束）。

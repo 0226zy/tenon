@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/0226zy/proto-platform/agent-runtime/internal/domain/entity"
-	"github.com/0226zy/proto-platform/agent-runtime/internal/domain/port"
-	"github.com/0226zy/proto-platform/agent-runtime/internal/domain/port/contracttest"
+	"github.com/0226zy/protoforge/agent-runtime/internal/domain/entity"
+	"github.com/0226zy/protoforge/agent-runtime/internal/domain/port"
+	"github.com/0226zy/protoforge/agent-runtime/internal/domain/port/contracttest"
 )
 
 // 契约套件：FileRepo 必须满足任何 LLMInfoRepo 实现都应成立的行为。

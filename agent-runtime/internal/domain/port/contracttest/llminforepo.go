@@ -14,8 +14,8 @@ package contracttest
 import (
 	"testing"
 
-	"github.com/0226zy/proto-platform/agent-runtime/internal/domain/entity"
-	"github.com/0226zy/proto-platform/agent-runtime/internal/domain/port"
+	"github.com/0226zy/protoforge/agent-runtime/internal/domain/entity"
+	"github.com/0226zy/protoforge/agent-runtime/internal/domain/port"
 )
 
 // SeedModels 是契约统一的前置数据：两条内置模型（deepseek 为缺省）。

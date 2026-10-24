@@ -5,12 +5,12 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/0226zy/proto-platform/internal/control/llm"
-	"github.com/0226zy/proto-platform/internal/control/quota"
-	"github.com/0226zy/proto-platform/internal/control/sandbox"
-	"github.com/0226zy/proto-platform/internal/kit/config"
-	"github.com/0226zy/proto-platform/internal/kit/httpx"
-	"github.com/0226zy/proto-platform/pkg/contract"
+	"github.com/0226zy/protoforge/internal/control/llm"
+	"github.com/0226zy/protoforge/internal/control/quota"
+	"github.com/0226zy/protoforge/internal/control/sandbox"
+	"github.com/0226zy/protoforge/internal/kit/config"
+	"github.com/0226zy/protoforge/internal/kit/httpx"
+	"github.com/0226zy/protoforge/pkg/contract"
 )
 
 type Authorizer interface {

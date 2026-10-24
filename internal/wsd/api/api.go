@@ -15,14 +15,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/0226zy/proto-platform/internal/wsd/bus"
-	"github.com/0226zy/proto-platform/internal/wsd/disk"
-	workspacefs "github.com/0226zy/proto-platform/internal/wsd/fs"
-	"github.com/0226zy/proto-platform/internal/wsd/gate"
-	gitservice "github.com/0226zy/proto-platform/internal/wsd/git"
-	"github.com/0226zy/proto-platform/internal/wsd/preview"
-	"github.com/0226zy/proto-platform/internal/wsd/proc"
-	"github.com/0226zy/proto-platform/pkg/contract"
+	"github.com/0226zy/protoforge/internal/wsd/bus"
+	"github.com/0226zy/protoforge/internal/wsd/disk"
+	workspacefs "github.com/0226zy/protoforge/internal/wsd/fs"
+	"github.com/0226zy/protoforge/internal/wsd/gate"
+	gitservice "github.com/0226zy/protoforge/internal/wsd/git"
+	"github.com/0226zy/protoforge/internal/wsd/preview"
+	"github.com/0226zy/protoforge/internal/wsd/proc"
+	"github.com/0226zy/protoforge/pkg/contract"
 )
 
 type Deps struct {

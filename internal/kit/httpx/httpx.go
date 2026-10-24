@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/0226zy/proto-platform/pkg/contract"
+	"github.com/0226zy/protoforge/pkg/contract"
 )
 
 type Error struct {

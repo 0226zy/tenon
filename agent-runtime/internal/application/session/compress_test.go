@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0226zy/proto-platform/agent-runtime/internal/application/agent"
-	"github.com/0226zy/proto-platform/agent-runtime/internal/domain/entity"
-	"github.com/0226zy/proto-platform/agent-runtime/internal/domain/port"
-	"github.com/0226zy/proto-platform/agent-runtime/internal/infrastructure/adapter/storejsonl"
+	"github.com/0226zy/protoforge/agent-runtime/internal/application/agent"
+	"github.com/0226zy/protoforge/agent-runtime/internal/domain/entity"
+	"github.com/0226zy/protoforge/agent-runtime/internal/domain/port"
+	"github.com/0226zy/protoforge/agent-runtime/internal/infrastructure/adapter/storejsonl"
 )
 
 // 带已知 spill 目录的测试管理器（压缩断言要数 spill 文件）。

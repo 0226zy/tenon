@@ -6,10 +6,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/0226zy/proto-platform/internal/control/agentclient"
-	"github.com/0226zy/proto-platform/internal/control/event"
-	"github.com/0226zy/proto-platform/internal/control/sandbox"
-	"github.com/0226zy/proto-platform/pkg/contract"
+	"github.com/0226zy/protoforge/internal/control/agentclient"
+	"github.com/0226zy/protoforge/internal/control/event"
+	"github.com/0226zy/protoforge/internal/control/sandbox"
+	"github.com/0226zy/protoforge/pkg/contract"
 )
 
 type PreviewUpdater interface {

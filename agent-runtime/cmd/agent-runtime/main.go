@@ -16,10 +16,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/0226zy/proto-platform/agent-runtime/internal/infrastructure/config"
-	"github.com/0226zy/proto-platform/agent-runtime/internal/interfaces/httpapi"
-	"github.com/0226zy/proto-platform/agent-runtime/internal/interfaces/webui"
-	"github.com/0226zy/proto-platform/agent-runtime/internal/shared/deps"
+	"github.com/0226zy/protoforge/agent-runtime/internal/infrastructure/config"
+	"github.com/0226zy/protoforge/agent-runtime/internal/interfaces/httpapi"
+	"github.com/0226zy/protoforge/agent-runtime/internal/interfaces/webui"
+	"github.com/0226zy/protoforge/agent-runtime/internal/shared/deps"
 )
 
 func main() {

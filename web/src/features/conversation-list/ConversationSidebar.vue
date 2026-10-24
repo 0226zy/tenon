@@ -66,9 +66,9 @@ onBeforeUnmount(() => {
 <template>
   <aside ref="root" class="conversation-sidebar" :class="{ 'conversation-sidebar--collapsed': ui.sidebarCollapsed }" aria-label="对话导航">
     <div class="sidebar-brand">
-      <RouterLink to="/" class="sidebar-brand__link" aria-label="原型构建平台首页">
+      <RouterLink to="/" class="sidebar-brand__link" aria-label="ProtoForge 首页">
         <span class="brand-mark"><Braces :size="20" /></span>
-        <span v-if="!ui.sidebarCollapsed" class="sidebar-brand__text">原型构建平台<small>PROTO WORKSPACE</small></span>
+        <span v-if="!ui.sidebarCollapsed" class="sidebar-brand__text">ProtoForge<small>PROTOTYPE WORKSPACE</small></span>
       </RouterLink>
       <button class="icon-button sidebar-collapse" type="button" :aria-label="ui.sidebarCollapsed ? '展开对话栏' : '折叠对话栏'" :title="ui.sidebarCollapsed ? '展开' : '折叠'" @click="ui.toggleSidebar">
         <ChevronRight v-if="ui.sidebarCollapsed" :size="17" /><ChevronLeft v-else :size="17" />

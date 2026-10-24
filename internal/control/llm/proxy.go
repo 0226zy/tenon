@@ -11,10 +11,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/0226zy/proto-platform/internal/control/sandbox"
-	"github.com/0226zy/proto-platform/internal/control/store"
-	"github.com/0226zy/proto-platform/internal/kit/config"
-	"github.com/0226zy/proto-platform/internal/kit/httpx"
+	"github.com/0226zy/protoforge/internal/control/sandbox"
+	"github.com/0226zy/protoforge/internal/control/store"
+	"github.com/0226zy/protoforge/internal/kit/config"
+	"github.com/0226zy/protoforge/internal/kit/httpx"
 )
 
 type ActiveRunAuthorizer interface {
@@ -91,7 +91,7 @@ func (p *Proxy) models(w http.ResponseWriter) {
 	}
 	data := []model{}
 	for _, v := range p.cat.List() {
-		data = append(data, model{ID: v.ID, Object: "model", OwnedBy: "proto-platform", Demo: contains(v.Tags, "demo")})
+		data = append(data, model{ID: v.ID, Object: "model", OwnedBy: "protoforge", Demo: contains(v.Tags, "demo")})
 	}
 	httpx.JSON(w, 200, map[string]any{"object": "list", "data": data})
 }

@@ -13,15 +13,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0226zy/proto-platform/internal/control/agentclient"
-	"github.com/0226zy/proto-platform/internal/control/consumer"
-	"github.com/0226zy/proto-platform/internal/control/event"
-	"github.com/0226zy/proto-platform/internal/control/quota"
-	"github.com/0226zy/proto-platform/internal/control/sandbox"
-	"github.com/0226zy/proto-platform/internal/control/store"
-	"github.com/0226zy/proto-platform/internal/kit/config"
-	"github.com/0226zy/proto-platform/internal/kit/idgen"
-	"github.com/0226zy/proto-platform/pkg/contract"
+	"github.com/0226zy/protoforge/internal/control/agentclient"
+	"github.com/0226zy/protoforge/internal/control/consumer"
+	"github.com/0226zy/protoforge/internal/control/event"
+	"github.com/0226zy/protoforge/internal/control/quota"
+	"github.com/0226zy/protoforge/internal/control/sandbox"
+	"github.com/0226zy/protoforge/internal/control/store"
+	"github.com/0226zy/protoforge/internal/kit/config"
+	"github.com/0226zy/protoforge/internal/kit/idgen"
+	"github.com/0226zy/protoforge/pkg/contract"
 )
 
 type testCatalog struct{}

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/0226zy/proto-platform/agent-runtime/internal/infrastructure/config"
+	"github.com/0226zy/protoforge/agent-runtime/internal/infrastructure/config"
 )
 
 func TestBuildDefaultModeIsUsedWhenCreatingSession(t *testing.T) {

@@ -37,17 +37,25 @@ func TestLocalDriverEnvironmentAndProcessCleanup(t *testing.T) {
 		t.Fatalf("instance=%+v", instance)
 	}
 	var environment string
-	deadline := time.Now().Add(3 * time.Second)
-	for time.Now().Before(deadline) {
-		raw, err := os.ReadFile(envFile)
-		if err == nil && strings.Contains(string(raw), "WSD_TOKEN=") {
-			environment = string(raw)
-			break
+	ticker := time.NewTicker(20 * time.Millisecond)
+	defer ticker.Stop()
+	for environment == "" {
+		select {
+		case <-ctx.Done():
+			logRaw, _ := os.ReadFile(filepath.Join(root, "sandboxes", convID, "wsd.log"))
+			t.Fatalf("helper environment was not written: %v; wsd log:\n%s", ctx.Err(), logRaw)
+		case <-ticker.C:
+			raw, err := os.ReadFile(envFile)
+			if err == nil && strings.Contains(string(raw), "WSD_TOKEN=") {
+				environment = string(raw)
+				continue
+			}
+			state, inspectErr := driver.Inspect(ctx, convID)
+			if inspectErr == nil && !state.Running {
+				logRaw, _ := os.ReadFile(filepath.Join(root, "sandboxes", convID, "wsd.log"))
+				t.Fatalf("helper exited before writing its environment; wsd log:\n%s", logRaw)
+			}
 		}
-		time.Sleep(20 * time.Millisecond)
-	}
-	if environment == "" {
-		t.Fatal("helper environment was not written")
 	}
 	workspace := filepath.Join(root, "sandboxes", convID, "workspace")
 	for _, expected := range []string{

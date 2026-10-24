@@ -8,10 +8,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/0226zy/proto-platform/internal/control/quota"
-	"github.com/0226zy/proto-platform/internal/control/store"
-	"github.com/0226zy/proto-platform/internal/kit/config"
-	"github.com/0226zy/proto-platform/internal/kit/idgen"
+	"github.com/0226zy/protoforge/internal/control/quota"
+	"github.com/0226zy/protoforge/internal/control/store"
+	"github.com/0226zy/protoforge/internal/kit/config"
+	"github.com/0226zy/protoforge/internal/kit/idgen"
 )
 
 type replacementDriver struct {

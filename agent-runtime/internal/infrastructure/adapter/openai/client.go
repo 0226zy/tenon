@@ -17,7 +17,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/0226zy/proto-platform/agent-runtime/internal/domain/entity"
+	"github.com/0226zy/protoforge/agent-runtime/internal/domain/entity"
 )
 
 // StatusError 是 HTTP 非 2xx 响应错误。

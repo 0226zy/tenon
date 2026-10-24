@@ -23,7 +23,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	toolenv "github.com/0226zy/proto-platform/agent-runtime/internal/infrastructure/adapter/tools"
+	toolenv "github.com/0226zy/protoforge/agent-runtime/internal/infrastructure/adapter/tools"
 )
 
 // protocolVersion 是握手声明的 MCP 协议版本。

@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/0226zy/proto-platform/internal/control/app"
-	"github.com/0226zy/proto-platform/internal/kit/config"
+	"github.com/0226zy/protoforge/internal/control/app"
+	"github.com/0226zy/protoforge/internal/kit/config"
 )
 
 type controlServer struct {

@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0226zy/proto-platform/pkg/contract"
+	"github.com/0226zy/protoforge/pkg/contract"
 )
 
 func TestRestartLogsAndAutomaticRestartLimit(t *testing.T) {

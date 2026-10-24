@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/0226zy/proto-platform/internal/wsd/proc"
+	"github.com/0226zy/protoforge/internal/wsd/proc"
 )
 
 type Supervisor interface {

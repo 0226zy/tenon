@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/0226zy/proto-platform/internal/control/agentclient"
-	"github.com/0226zy/proto-platform/internal/control/sandbox"
-	"github.com/0226zy/proto-platform/internal/control/store"
-	"github.com/0226zy/proto-platform/internal/kit/httpx"
-	"github.com/0226zy/proto-platform/pkg/contract"
+	"github.com/0226zy/protoforge/internal/control/agentclient"
+	"github.com/0226zy/protoforge/internal/control/sandbox"
+	"github.com/0226zy/protoforge/internal/control/store"
+	"github.com/0226zy/protoforge/internal/kit/httpx"
+	"github.com/0226zy/protoforge/pkg/contract"
 )
 
 type Service struct {

@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # Build from the repository root:
-#   docker build -f image/Dockerfile --build-arg IMAGE_VER=v3 -t proto-sandbox:v3 .
+#   docker build -f image/Dockerfile --build-arg IMAGE_VER=v3 -t protoforge-sandbox:v3 .
 
 FROM golang:1.25-bookworm AS go-build
 WORKDIR /src

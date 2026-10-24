@@ -10,11 +10,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0226zy/proto-platform/agent-runtime/internal/application/agent"
-	"github.com/0226zy/proto-platform/agent-runtime/internal/domain/derr"
-	"github.com/0226zy/proto-platform/agent-runtime/internal/domain/entity"
-	"github.com/0226zy/proto-platform/agent-runtime/internal/domain/port"
-	"github.com/0226zy/proto-platform/agent-runtime/internal/infrastructure/adapter/storejsonl"
+	"github.com/0226zy/protoforge/agent-runtime/internal/application/agent"
+	"github.com/0226zy/protoforge/agent-runtime/internal/domain/derr"
+	"github.com/0226zy/protoforge/agent-runtime/internal/domain/entity"
+	"github.com/0226zy/protoforge/agent-runtime/internal/domain/port"
+	"github.com/0226zy/protoforge/agent-runtime/internal/infrastructure/adapter/storejsonl"
 )
 
 // echoLLM 直接返回固定文本（无工具调用），回合应一轮即正常终止。

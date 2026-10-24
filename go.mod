@@ -1,4 +1,4 @@
-module github.com/0226zy/proto-platform
+module github.com/0226zy/protoforge
 
 go 1.25.0
 

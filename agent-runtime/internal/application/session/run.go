@@ -9,10 +9,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/0226zy/proto-platform/agent-runtime/internal/application/agent"
-	"github.com/0226zy/proto-platform/agent-runtime/internal/domain/derr"
-	"github.com/0226zy/proto-platform/agent-runtime/internal/domain/entity"
-	"github.com/0226zy/proto-platform/agent-runtime/internal/domain/port"
+	"github.com/0226zy/protoforge/agent-runtime/internal/application/agent"
+	"github.com/0226zy/protoforge/agent-runtime/internal/domain/derr"
+	"github.com/0226zy/protoforge/agent-runtime/internal/domain/entity"
+	"github.com/0226zy/protoforge/agent-runtime/internal/domain/port"
 )
 
 // RunOptions 配置停止时间预算；Models 用于 Prepare 的只读目录校验。

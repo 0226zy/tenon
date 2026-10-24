@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/0226zy/proto-platform/pkg/contract"
+	"github.com/0226zy/protoforge/pkg/contract"
 )
 
 var (
