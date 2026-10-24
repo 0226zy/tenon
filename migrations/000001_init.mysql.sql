@@ -1,0 +1,127 @@
+CREATE TABLE `t_user` (
+  `Fid` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `Fuser_id` VARCHAR(64) NOT NULL,
+  `Fname` VARCHAR(64) NOT NULL DEFAULT '',
+  `Fpwd_hash` VARCHAR(255) NOT NULL COMMENT 'argon2id',
+  `Fstatus` TINYINT NOT NULL DEFAULT 1 COMMENT '1 正常 2 禁用',
+  `Fmax_conv` INT NOT NULL DEFAULT 20,
+  `Fcreate_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `Fmodify_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`Fid`), UNIQUE KEY `uk_user_id` (`Fuser_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE `t_auth_session` (
+  `Fid` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `Fsession_hash` CHAR(64) NOT NULL,
+  `Fuser_id` VARCHAR(64) NOT NULL,
+  `Fexpire_time` DATETIME NOT NULL,
+  `Fcreate_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`Fid`), UNIQUE KEY `uk_session_hash` (`Fsession_hash`), KEY `idx_user` (`Fuser_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE `t_conversation` (
+  `Fid` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `Fconv_id` CHAR(12) NOT NULL,
+  `Fuser_id` VARCHAR(64) NOT NULL,
+  `Ftitle` VARCHAR(128) NOT NULL DEFAULT '',
+  `Fmodel` VARCHAR(64) NOT NULL,
+  `Ftemplate` VARCHAR(32) NOT NULL DEFAULT 'react-go-sqlite',
+  `Fpreview_key` CHAR(26) NOT NULL,
+  `Fagent_session_id` VARCHAR(40) NOT NULL DEFAULT '',
+  `Fruntime_epoch` CHAR(26) NOT NULL DEFAULT '',
+  `Frt_next_seq` INT NOT NULL DEFAULT 0,
+  `Flast_seq` BIGINT NOT NULL DEFAULT 0,
+  `Fexec_generation` BIGINT NOT NULL DEFAULT 0,
+  `Fworker_owner` VARCHAR(64) NULL,
+  `Flease_until` DATETIME NULL,
+  `Flstate` TINYINT NOT NULL DEFAULT 1,
+  `Flast_active_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `Fcreate_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `Fmodify_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`Fid`), UNIQUE KEY `uk_conv_id` (`Fconv_id`), UNIQUE KEY `uk_preview_key` (`Fpreview_key`),
+  KEY `idx_user_active` (`Fuser_id`,`Flstate`,`Flast_active_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE `t_message` (
+  `Fid` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `Fmsg_id` CHAR(26) NOT NULL,
+  `Fconv_id` CHAR(12) NOT NULL,
+  `Frun_id` CHAR(26) NOT NULL,
+  `Frole` TINYINT NOT NULL,
+  `Fcontent` MEDIUMTEXT NOT NULL,
+  `Fcreate_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`Fid`), UNIQUE KEY `uk_msg_id` (`Fmsg_id`), KEY `idx_conv` (`Fconv_id`,`Fid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE `t_run` (
+  `Fid` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `Frun_id` CHAR(26) NOT NULL,
+  `Fconv_id` CHAR(12) NOT NULL,
+  `Fuser_id` VARCHAR(64) NOT NULL,
+  `Frequest_id` VARCHAR(64) NOT NULL,
+  `Finput_hash` CHAR(64) NOT NULL,
+  `Fmodel` VARCHAR(64) NOT NULL,
+  `Fstatus` TINYINT NOT NULL DEFAULT 0,
+  `Factive` TINYINT NULL DEFAULT 1,
+  `Fgeneration` BIGINT NOT NULL DEFAULT 0,
+  `Fcancel_req` TINYINT NOT NULL DEFAULT 0,
+  `Fstop_confirmed` TINYINT NOT NULL DEFAULT 0,
+  `Fcheckpoint_status` TINYINT NOT NULL DEFAULT 0,
+  `Fcommit` VARCHAR(40) NOT NULL DEFAULT '',
+  `Frt_seq_start` INT NOT NULL DEFAULT 0,
+  `Frt_seq_end` INT NOT NULL DEFAULT 0,
+  `Fiterations` INT NOT NULL DEFAULT 0,
+  `Fprompt_tokens` INT NOT NULL DEFAULT 0,
+  `Fcompl_tokens` INT NOT NULL DEFAULT 0,
+  `Ferror_code` VARCHAR(32) NOT NULL DEFAULT '',
+  `Ferror_msg` VARCHAR(512) NOT NULL DEFAULT '',
+  `Fstart_time` DATETIME NULL,
+  `Fend_time` DATETIME NULL,
+  `Fcreate_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `Fmodify_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`Fid`), UNIQUE KEY `uk_run_id` (`Frun_id`), UNIQUE KEY `uk_conv_request` (`Fconv_id`,`Frequest_id`),
+  UNIQUE KEY `uk_conv_active` (`Fconv_id`,`Factive`), KEY `idx_active` (`Factive`,`Fstatus`), KEY `idx_user_time` (`Fuser_id`,`Fcreate_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE `t_event` (
+  `Fid` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `Fconv_id` CHAR(12) NOT NULL,
+  `Fseq` BIGINT NOT NULL,
+  `Frun_id` CHAR(26) NOT NULL DEFAULT '',
+  `Fsource` TINYINT NOT NULL,
+  `Ftype` VARCHAR(32) NOT NULL,
+  `Fruntime_epoch` CHAR(26) NULL,
+  `Fagent_session_id` VARCHAR(40) NULL,
+  `Frt_seq` INT NULL,
+  `Fpayload` MEDIUMTEXT NOT NULL,
+  `Fcreate_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`Fid`), UNIQUE KEY `uk_conv_seq` (`Fconv_id`,`Fseq`),
+  UNIQUE KEY `uk_source_event` (`Fruntime_epoch`,`Fagent_session_id`,`Frt_seq`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE `t_sandbox` (
+  `Fid` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `Fconv_id` CHAR(12) NOT NULL,
+  `Finst_id` CHAR(26) NOT NULL DEFAULT '',
+  `Fstatus` TINYINT NOT NULL DEFAULT 0,
+  `Fcontainer_id` VARCHAR(64) NOT NULL DEFAULT '',
+  `Fvolume_name` VARCHAR(64) NOT NULL DEFAULT '',
+  `Fimage_ver` VARCHAR(32) NOT NULL DEFAULT '',
+  `Fnet_addr` VARCHAR(64) NOT NULL DEFAULT '',
+  `Ftoken_hash` CHAR(64) NOT NULL DEFAULT '',
+  `Ftoken_expire` DATETIME NULL,
+  `Fpreview_status` TINYINT NOT NULL DEFAULT 0,
+  `Fpreview_gen` BIGINT NOT NULL DEFAULT 0,
+  `Fpreview_commit` VARCHAR(40) NOT NULL DEFAULT '',
+  `Flast_active_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `Fcreate_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `Fmodify_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`Fid`), UNIQUE KEY `uk_conv_id` (`Fconv_id`), KEY `idx_token_hash` (`Ftoken_hash`), KEY `idx_status_active` (`Fstatus`,`Flast_active_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE `t_llm_usage` (
+  `Fid` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `Fconv_id` CHAR(12) NOT NULL,
+  `Frun_id` CHAR(26) NOT NULL DEFAULT '',
+  `Fuser_id` VARCHAR(64) NOT NULL,
+  `Fmodel` VARCHAR(64) NOT NULL,
+  `Fprompt_tokens` INT NOT NULL DEFAULT 0,
+  `Fcompl_tokens` INT NOT NULL DEFAULT 0,
+  `Fcost_ms` INT NOT NULL DEFAULT 0,
+  `Fhttp_status` SMALLINT NOT NULL DEFAULT 0,
+  `Fcreate_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`Fid`), KEY `idx_conv_time` (`Fconv_id`,`Fcreate_time`), KEY `idx_run` (`Frun_id`), KEY `idx_user_time` (`Fuser_id`,`Fcreate_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

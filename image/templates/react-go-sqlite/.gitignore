@@ -1,0 +1,12 @@
+node_modules/
+web/node_modules/
+dist/
+web/dist/
+bin/
+data/
+*.sqlite
+*.sqlite-*
+.env
+.env.*
+!.env.example
+.DS_Store

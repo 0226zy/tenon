@@ -1,0 +1,36 @@
+{
+  "name": "proto-platform-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --noEmit -p tsconfig.json && vite build",
+    "preview": "vite preview",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "dompurify": "^3.2.4",
+    "lucide-vue-next": "^0.468.0",
+    "markdown-it": "^14.1.0",
+    "monaco-editor": "^0.52.2",
+    "pinia": "^2.3.1",
+    "ulid": "^2.3.0",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "@types/markdown-it": "^14.1.2",
+    "@types/node": "^26.6.5",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "@vue/test-utils": "^2.4.6",
+    "jsdom": "^26.0.0",
+    "typescript": "~5.7.2",
+    "vite": "^6.1.0",
+    "vitest": "^5.0.5",
+    "vue-tsc": "^2.2.0"
+  }
+}

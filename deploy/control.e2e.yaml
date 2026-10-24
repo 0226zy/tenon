@@ -1,0 +1,39 @@
+mode: local
+listen:
+  api: 127.0.0.1:8080
+  preview: 127.0.0.1:8081
+  internal: 127.0.0.1:8082
+  metrics: 127.0.0.1:9090
+web:
+  origin: http://127.0.0.1:8080
+control:
+  secret_file: ../.local/e2e/data/secret.key
+sqlite:
+  path: ../.local/e2e/data/control.db
+auth:
+  cookie_secure: false
+  login_fail_limit: 5
+  login_lock: 6s
+catalog:
+  file: ./models.local.yaml
+user:
+  default_max_conv: 64
+event:
+  tool_result_max: 1024
+sandbox:
+  driver: local
+  internal_url: http://127.0.0.1:8082
+  health_interval: 2s
+  idle_stop_after: 30m
+local:
+  root: ../.local/e2e/data/sandboxes
+  wsd_bin: ../bin/wsd
+  template_dir: ../image/templates/react-go-sqlite
+  dshd_bin: ../dsh-go/bin/dshd
+  image_ver: local-dev
+  goproxy: https://goproxy.cn,direct
+preview:
+  domain: localhost
+  scheme: http
+  public_address: "{key}.preview.localhost:8081"
+  cookie_secure: true

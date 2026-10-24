@@ -1,0 +1,35 @@
+# LLM 模型信息资源（LLMInfoRepo 的本地文件实现）。
+# 会话创建时按 name 选用；后续该资源切换为 DB 仓储时本文件由迁移导入。
+#
+# 密钥约定：优先 api_key_env（环境变量引用），避免密钥落盘进版本库；
+# api_key 字面量仅适合本地开发（本文件权限 0600，且不应提交真实密钥）。
+
+models:
+  - name: deepseek
+    provider: openai-compat
+    base_url: https://api.deepseek.com/v1
+    model: deepseek-chat
+    api_key_env: DEEPSEEK_API_KEY
+    temperature: 0.3
+    max_tokens: 8192
+    timeout_seconds: 120
+    default: true
+    builtin: true
+
+  - name: kimi
+    provider: openai-compat
+    base_url: https://api.moonshot.cn/v1
+    model: kimi-k2-0905-preview
+    api_key_env: MOONSHOT_API_KEY
+    temperature: 0.6
+    max_tokens: 8192
+    timeout_seconds: 120
+    builtin: true
+
+  # 用户自定义示例（POST /v1/models 也会追加到这里）：
+  # - name: my-local
+  #   provider: openai-compat
+  #   base_url: http://127.0.0.1:11434/v1
+  #   model: qwen2.5-coder
+  #   api_key: ollama
+  #   temperature: 0.2

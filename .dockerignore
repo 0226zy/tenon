@@ -1,0 +1,27 @@
+# Version control and local runtime state
+.git
+**/.git
+.local
+**/.local
+**/data
+
+# Dependencies and generated output
+**/node_modules
+**/dist
+**/bin
+**/playwright-report
+**/test-results
+
+# Credentials and machine-local configuration
+**/.env
+**/.env.*
+**/*.key
+**/*.secret
+**/.ftp
+dsh-go/conf
+
+# Databases, logs and OS metadata
+**/*.sqlite
+**/*.sqlite-*
+**/*.log
+**/.DS_Store

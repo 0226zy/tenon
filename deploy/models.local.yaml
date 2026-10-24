@@ -1,0 +1,16 @@
+models:
+  - id: local-demo
+    name: Local deterministic demo
+    desc: Explicit local-only demo; drives real dsh-go tools without calling a model.
+    tags: [local, demo]
+    protocol: demo
+    demo: true
+    default: true
+    max_tokens: 8192
+  - id: local-demo-secondary
+    name: Local deterministic demo secondary
+    desc: Secondary local-only demo used to verify model selection and usage metering.
+    tags: [local, demo]
+    protocol: demo
+    demo: true
+    max_tokens: 8192

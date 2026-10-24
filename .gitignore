@@ -1,0 +1,28 @@
+# Binaries and build output
+bin/
+dist/
+web/dist/
+web/node_modules/
+node_modules/
+
+# Runtime data and local secrets
+.local/
+data/
+*.sqlite
+*.sqlite-*
+*.key
+*.secret
+.env
+.env.*
+!.env.example
+
+# Logs, caches and test output
+*.log
+coverage.out
+playwright-report/
+test-results/
+.DS_Store
+
+# Editor settings
+.idea/
+.vscode/

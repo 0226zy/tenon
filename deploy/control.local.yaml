@@ -1,0 +1,31 @@
+mode: local
+listen:
+  api: 127.0.0.1:8080
+  preview: 127.0.0.1:8081
+  internal: 127.0.0.1:8082
+  metrics: 127.0.0.1:9090
+web:
+  origin: http://127.0.0.1:8080
+control:
+  secret_file: ./data/secret.key
+sqlite:
+  path: ./data/control.db
+auth:
+  cookie_secure: false
+catalog:
+  file: ./models.local.yaml
+sandbox:
+  driver: local
+  internal_url: http://127.0.0.1:8082
+local:
+  root: ./data/sandboxes
+  wsd_bin: ../bin/wsd
+  template_dir: ../image/templates/react-go-sqlite
+  dshd_bin: ../dsh-go/bin/dshd
+  image_ver: local-dev
+  goproxy: https://goproxy.cn,direct
+preview:
+  domain: localhost
+  scheme: http
+  public_address: "{key}.preview.localhost:8081"
+  cookie_secure: true
