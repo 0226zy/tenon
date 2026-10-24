@@ -102,7 +102,7 @@ func (r *Registry) orphanProcesses() ([]processInfo, error) {
 	return out, nil
 }
 
-// Reap terminates orphaned groups without ever targeting a registered dshd or
+// Reap terminates orphaned groups without ever targeting a registered agent-runtime or
 // preview group. It waits for actual disappearance and reaps direct zombies.
 func (r *Registry) Reap(ctx context.Context, grace time.Duration) (killed, remaining int, err error) {
 	initial, err := r.orphanProcesses()
@@ -189,7 +189,7 @@ func (r *Registry) waitNoOrphans(ctx context.Context, wait time.Duration) error 
 }
 
 // StartReaper reaps only unregistered children, avoiding Cmd.Wait races for the
-// registered dshd and preview processes.
+// registered agent-runtime and preview processes.
 func (r *Registry) StartReaper(ctx context.Context) {
 	sig := make(chan os.Signal, 1)
 	signalNotifySIGCHLD(sig)

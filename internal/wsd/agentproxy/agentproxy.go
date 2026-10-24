@@ -1,4 +1,4 @@
-// Package agentproxy exposes only the control-facing dshd API surface.
+// Package agentproxy exposes only the control-facing agent-runtime API surface.
 package agentproxy
 
 import (
@@ -28,7 +28,7 @@ func DefaultRoutes() []Route {
 	}
 }
 
-func New(target *url.URL, dshdToken string, allow []Route) http.Handler {
+func New(target *url.URL, agentRuntimeToken string, allow []Route) http.Handler {
 	if allow == nil {
 		allow = DefaultRoutes()
 	}
@@ -45,7 +45,7 @@ func New(target *url.URL, dshdToken string, allow []Route) http.Handler {
 			r.Out.Host = target.Host
 			r.Out.Header = r.In.Header.Clone()
 			r.Out.Header.Del("Authorization")
-			r.Out.Header.Set("Authorization", "Bearer "+dshdToken)
+			r.Out.Header.Set("Authorization", "Bearer "+agentRuntimeToken)
 			r.Out.Header.Set("Accept-Encoding", "identity")
 			r.SetXForwarded()
 		},
@@ -62,7 +62,7 @@ func New(target *url.URL, dshdToken string, allow []Route) http.Handler {
 		},
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if dshdToken == "" || !allowed(allow, r.Method, r.URL.Path) {
+		if agentRuntimeToken == "" || !allowed(allow, r.Method, r.URL.Path) {
 			writeError(w, http.StatusNotFound, "NOT_FOUND", "route not found")
 			return
 		}

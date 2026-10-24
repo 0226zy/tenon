@@ -2,11 +2,13 @@
 
 本清单按三份输入规格合并。勾选项均有自动化测试或真实 Chrome 证据；未勾选项表示证据不足或验收前提未满足，不以“代码已存在”代替验证。
 
+> 命名说明：Runtime 已从旧称 `dsh-go` / `dshd` 统一改名为 `agent-runtime`；本基线为改名后的重新复验结果。
+
 ## 本次本机验证基线
 
-2026-10-24 已实际执行：根 module 与 `dsh-go/` 的全量 `go test ./...` 和 `go test -race ./...`；前端 22 个测试文件、58 项测试及生产构建；`python3 scripts/smoke_local.py`；Chrome `155.0.8059.85` 全量 `npm run test:e2e`。Chrome 结果包含 CSP 内联脚本阻断、真实工具退出码 17、预览构建失败、六次写入恢复、隔离休眠与自动唤醒。运行命令见 `README.md`，结果保存在未跟踪的 `.local/last-smoke.json` 与 `.local/e2e/result.json`。
+2026-10-24 已实际执行：根 module 与 `agent-runtime/` 的全量 `go test ./...` 和 `go test -race ./...`；前端 22 个测试文件、58 项测试及生产构建；`python3 scripts/smoke_local.py`；Chrome `155.0.8059.85` 全量 `npm run test:e2e`。Chrome 结果包含 CSP 内联脚本阻断、真实工具退出码 17、预览构建失败、六次写入恢复、隔离休眠与自动唤醒。运行命令见 `README.md`，结果保存在未跟踪的 `.local/last-smoke.json` 与 `.local/e2e/result.json`。
 
-默认模型是可复现的本地确定性 demo，不是外部真实模型；真实 dsh-go 工具、进程、SQLite、文件修改和预览构建均实际执行。S6 的 prompt tokens 压缩由阈值与投影单测覆盖，不把 local-demo 结果当作真实上游模型质量或故障验收。
+默认模型是可复现的本地确定性 demo，不是外部真实模型；真实 agent-runtime 工具、进程、SQLite、文件修改和预览构建均实际执行。S6 的 prompt tokens 压缩由阈值与投影单测覆盖，不把 local-demo 结果当作真实上游模型质量或故障验收。
 
 ## Runtime
 
@@ -26,7 +28,7 @@
 - [x] 建会话 → prepare → start → 事件 → 停止确认 → commit → preview ready。
 - [x] 文件接口拒绝绝对路径、`..`、NUL 和越界 symlink；二进制与 1 MB 限制正确。
 - [x] 生成应用进程环境不含 LLM_PROXY_TOKEN、MAGENTS_AUTH_TOKEN、WSD_TOKEN。
-- [x] 无 Bearer 的 wsd/dshd 管理请求返回 401。
+- [x] 无 Bearer 的 wsd/agent-runtime 管理请求返回 401。
 - [x] 孤儿进程可清理；取消 Run 不误杀预览。
 - [x] 未知进程占用预览端口时返回 PORT_CONFLICT，且不杀该进程。
 - [x] Git commit 按 run_id 幂等；旧 generation 不覆盖新预览。

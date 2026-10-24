@@ -134,12 +134,12 @@ type AgentLimits struct {
 	ContextCompressAtTokens int `yaml:"context_compress_at_tokens"`
 }
 type Local struct {
-	Root        string `yaml:"root"`
-	WSDBin      string `yaml:"wsd_bin"`
-	TemplateDir string `yaml:"template_dir"`
-	DSHDBin     string `yaml:"dshd_bin"`
-	ImageVer    string `yaml:"image_ver"`
-	GoProxy     string `yaml:"goproxy"`
+	Root            string `yaml:"root"`
+	WSDBin          string `yaml:"wsd_bin"`
+	TemplateDir     string `yaml:"template_dir"`
+	AgentRuntimeBin string `yaml:"agent_runtime_bin"`
+	ImageVer        string `yaml:"image_ver"`
+	GoProxy         string `yaml:"goproxy"`
 }
 type Preview struct {
 	Domain            string   `yaml:"domain"`
@@ -229,7 +229,7 @@ func Load(path string) (*Config, error) {
 	resolve(&c.Local.Root)
 	resolve(&c.Local.WSDBin)
 	resolve(&c.Local.TemplateDir)
-	resolve(&c.Local.DSHDBin)
+	resolve(&c.Local.AgentRuntimeBin)
 	if v := os.Getenv("CONTROL_MYSQL_DSN"); v != "" {
 		c.MySQL.DSN = v
 	}

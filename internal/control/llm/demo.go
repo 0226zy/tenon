@@ -25,7 +25,7 @@ func demoDecide(req chatRequest) demoDecision {
 	requestText := ""
 	for _, m := range req.Messages {
 		if m.Role == "user" {
-			// A dsh session spans multiple Runs. Tool results before the latest
+			// An agent-runtime session spans multiple Runs. Tool results before the latest
 			// user message belong to earlier turns and must not suppress this turn.
 			requestText = m.Content
 			seen = map[string]bool{}
@@ -70,9 +70,9 @@ func demoDecide(req chatRequest) demoDecision {
 	if len(failed) > 0 {
 		return demoDecision{content: demoFailureText(failed, "请展开对应工具卡片查看错误详情；本次结果不能按全部成功验收。"), finish: "stop"}
 	}
-	text := "[本地 demo] 已通过 dsh-go 工具链写入 web/src/App.tsx，go test ./... 执行成功，preview 已就绪。首页已发生可查看的实际改动。此回复由确定性本地 demo 生成，不是真实模型输出。"
+	text := "[本地 demo] 已通过 agent-runtime 工具链写入 web/src/App.tsx，go test ./... 执行成功，preview 已就绪。首页已发生可查看的实际改动。此回复由确定性本地 demo 生成，不是真实模型输出。"
 	if previewName == "" {
-		text = "[本地 demo] 已通过 dsh-go 工具链写入 web/src/App.tsx，go test ./... 执行成功。当前 Runtime 未提供 preview 工具，因此未启动预览。此回复由确定性本地 demo 生成，不是真实模型输出。"
+		text = "[本地 demo] 已通过 agent-runtime 工具链写入 web/src/App.tsx，go test ./... 执行成功。当前 Runtime 未提供 preview 工具，因此未启动预览。此回复由确定性本地 demo 生成，不是真实模型输出。"
 	}
 	return demoDecision{content: text, finish: "stop"}
 }
@@ -209,7 +209,7 @@ export default function App() {
       </div>
       <h1 style={{ fontSize: 42, marginBottom: 12 }}>原型已真实修改</h1>
       <p style={{ fontSize: 18, lineHeight: 1.7 }}>
-        这个页面由 control 的 local demo 通过 dsh-go write_file 工具写入，随后执行测试并请求预览。
+        这个页面由 control 的 local demo 通过 agent-runtime write_file 工具写入，随后执行测试并请求预览。
       </p>
       <section style={{ marginTop: 28, padding: 20, border: "1px solid #ddd", borderRadius: 12 }}>
         <h2 style={{ marginTop: 0, fontSize: 18 }}>本次需求</h2>

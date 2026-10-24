@@ -1,7 +1,7 @@
 models:
   - id: local-demo
     name: Local deterministic demo
-    desc: Explicit local-only demo; drives real dsh-go tools without calling a model.
+    desc: Explicit local-only demo; drives real agent-runtime tools without calling a model.
     tags: [local, demo]
     protocol: demo
     demo: true

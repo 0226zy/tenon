@@ -20,7 +20,7 @@ const env = {
 const builds = [
   ['bin/control', './cmd/control', root],
   ['bin/wsd', './cmd/wsd', root],
-  ['bin/dshd', './cmd/dshd', path.join(root, 'dsh-go')],
+  ['bin/agent-runtime', './cmd/agent-runtime', path.join(root, 'agent-runtime')],
 ]
 for (const [output, pkg, cwd] of builds) {
   console.log(`构建 ${output}`)

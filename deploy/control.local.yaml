@@ -21,7 +21,7 @@ local:
   root: ./data/sandboxes
   wsd_bin: ../bin/wsd
   template_dir: ../image/templates/react-go-sqlite
-  dshd_bin: ../dsh-go/bin/dshd
+  agent_runtime_bin: ../agent-runtime/bin/agent-runtime
   image_ver: local-dev
   goproxy: https://goproxy.cn,direct
 preview:

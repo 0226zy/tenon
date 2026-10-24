@@ -18,7 +18,7 @@
 **/*.key
 **/*.secret
 **/.ftp
-dsh-go/conf
+agent-runtime/conf
 
 # Databases, logs and OS metadata
 **/*.sqlite

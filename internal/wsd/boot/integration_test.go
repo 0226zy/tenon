@@ -56,7 +56,7 @@ func TestRunBootHealthAndAuthenticatedAgentProxy(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(template, "README.md"), []byte("integration"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	dshdBin := filepath.Join(t.TempDir(), "fake-dshd")
+	agentRuntimeBin := filepath.Join(t.TempDir(), "fake-agent-runtime")
 	script := `#!/usr/bin/env python3
 import os
 import re
@@ -84,11 +84,11 @@ with open(config_path, encoding="utf-8") as config_file:
     config = config_file.read()
 match = re.search(r"^\s*listen:\s*(\S+)\s*$", config, re.MULTILINE)
 if match is None:
-    raise RuntimeError("dsh config has no listen address")
+    raise RuntimeError("agent-runtime config has no listen address")
 host, port = match.group(1).rsplit(":", 1)
 HTTPServer((host, int(port)), Handler).serve_forever()
 `
-	if err := os.WriteFile(dshdBin, []byte(script), 0o700); err != nil {
+	if err := os.WriteFile(agentRuntimeBin, []byte(script), 0o700); err != nil {
 		t.Fatal(err)
 	}
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
@@ -100,7 +100,7 @@ HTTPServer((host, int(port)), Handler).serve_forever()
 	env := Env{
 		SandboxID: "integration", CPInternalURL: control.URL, LLMProxyToken: "llm-token", WSDToken: "wsd-token",
 		Local: true, Listen: "127.0.0.1:" + strconv.Itoa(wsdPort), WorkspaceRoot: workspace,
-		TemplateDir: template, DshdBin: dshdBin, ImageVer: "integration-image", PreviewPort: 0,
+		TemplateDir: template, AgentRuntimeBin: agentRuntimeBin, ImageVer: "integration-image", PreviewPort: 0,
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan error, 1)
@@ -142,7 +142,7 @@ HTTPServer((host, int(port)), Handler).serve_forever()
 	if health.API != contract.WSDAPI || health.Agent != "ok" || health.Workspace != "ok" || health.Image != "integration-image" {
 		t.Fatalf("health = %+v", health)
 	}
-	rawDshConfig, err := os.ReadFile(filepath.Join(workspace, ".dsh", "dsh.yaml"))
+	rawAgentRuntimeConfig, err := os.ReadFile(filepath.Join(workspace, ".agent-runtime", "agent-runtime.yaml"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -151,17 +151,17 @@ HTTPServer((host, int(port)), Handler).serve_forever()
 			Listen string `yaml:"listen"`
 		} `yaml:"server"`
 	}
-	if err := yaml.Unmarshal(rawDshConfig, &generated); err != nil {
+	if err := yaml.Unmarshal(rawAgentRuntimeConfig, &generated); err != nil {
 		t.Fatal(err)
 	}
-	dshdAddress := generated.Server.Listen
-	host, portText, err := net.SplitHostPort(dshdAddress)
+	agentRuntimeAddress := generated.Server.Listen
+	host, portText, err := net.SplitHostPort(agentRuntimeAddress)
 	if err != nil {
-		t.Fatalf("invalid dshd address %q: %v", dshdAddress, err)
+		t.Fatalf("invalid agent-runtime address %q: %v", agentRuntimeAddress, err)
 	}
 	port, err := strconv.Atoi(portText)
-	if err != nil || host != "127.0.0.1" || port <= 0 || dshdAddress == "127.0.0.1:3080" {
-		t.Fatalf("local dshd address = %q", dshdAddress)
+	if err != nil || host != "127.0.0.1" || port <= 0 || agentRuntimeAddress == "127.0.0.1:3080" {
+		t.Fatalf("local agent-runtime address = %q", agentRuntimeAddress)
 	}
 	resp, err := client.Post(base+"/agent/sessions", "application/json", bytes.NewBufferString("{}"))
 	if err != nil {
@@ -194,9 +194,9 @@ HTTPServer((host, int(port)), Handler).serve_forever()
 	case <-time.After(10 * time.Second):
 		t.Fatal("wsd did not stop after cancellation")
 	}
-	conn, err := net.DialTimeout("tcp", dshdAddress, 200*time.Millisecond)
+	conn, err := net.DialTimeout("tcp", agentRuntimeAddress, 200*time.Millisecond)
 	if err == nil {
 		conn.Close()
-		t.Fatal("fake dshd remained after wsd shutdown")
+		t.Fatal("fake agent-runtime remained after wsd shutdown")
 	}
 }

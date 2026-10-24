@@ -26,24 +26,24 @@ type Env struct {
 	WSDToken      string
 	Proxy         ProxyEnv
 
-	Local         bool
-	Listen        string
-	WorkspaceRoot string
-	TemplateDir   string
-	DshdBin       string
-	ImageVer      string
-	PreviewPort   int
+	Local           bool
+	Listen          string
+	WorkspaceRoot   string
+	TemplateDir     string
+	AgentRuntimeBin string
+	ImageVer        string
+	PreviewPort     int
 }
 
 func LoadEnv() (Env, error) {
 	env := Env{
 		SandboxID: os.Getenv("SANDBOX_ID"), CPInternalURL: os.Getenv("CP_INTERNAL_URL"),
 		LLMProxyToken: os.Getenv("LLM_PROXY_TOKEN"), WSDToken: os.Getenv("WSD_TOKEN"),
-		Listen:        defaultEnv("WSD_LISTEN", "0.0.0.0:7000"),
-		WorkspaceRoot: defaultEnv("WORKSPACE_ROOT", "/workspace"),
-		TemplateDir:   defaultEnv("WSD_TEMPLATE_DIR", "/opt/templates/react-go-sqlite"),
-		DshdBin:       defaultEnv("WSD_DSHD_BIN", "/usr/local/bin/dshd"),
-		ImageVer:      defaultEnv("WSD_IMAGE_VER", "dev"),
+		Listen:          defaultEnv("WSD_LISTEN", "0.0.0.0:7000"),
+		WorkspaceRoot:   defaultEnv("WORKSPACE_ROOT", "/workspace"),
+		TemplateDir:     defaultEnv("WSD_TEMPLATE_DIR", "/opt/templates/react-go-sqlite"),
+		AgentRuntimeBin: defaultEnv("WSD_AGENT_RUNTIME_BIN", "/usr/local/bin/agent-runtime"),
+		ImageVer:        defaultEnv("WSD_IMAGE_VER", "dev"),
 		Proxy: ProxyEnv{
 			GOPROXY: os.Getenv("GOPROXY"), GOFLAGS: os.Getenv("GOFLAGS"), GOMODCACHE: os.Getenv("GOMODCACHE"),
 			NPMConfigRegistry: os.Getenv("npm_config_registry"), NPMConfigCache: os.Getenv("npm_config_cache"),
@@ -63,7 +63,7 @@ func LoadEnv() (Env, error) {
 	if err != nil || parsed.Host == "" || (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" {
 		return Env{}, errors.New("CP_INTERNAL_URL must be an absolute HTTP(S) URL without credentials or query")
 	}
-	for name, value := range map[string]string{"WORKSPACE_ROOT": env.WorkspaceRoot, "WSD_TEMPLATE_DIR": env.TemplateDir, "WSD_DSHD_BIN": env.DshdBin} {
+	for name, value := range map[string]string{"WORKSPACE_ROOT": env.WorkspaceRoot, "WSD_TEMPLATE_DIR": env.TemplateDir, "WSD_AGENT_RUNTIME_BIN": env.AgentRuntimeBin} {
 		if !filepath.IsAbs(value) {
 			return Env{}, fmt.Errorf("%s must be an absolute path", name)
 		}
@@ -80,7 +80,7 @@ func LoadEnv() (Env, error) {
 		env.PreviewPort = port
 	}
 	if !env.Local {
-		if env.WorkspaceRoot != "/workspace" || env.TemplateDir != "/opt/templates/react-go-sqlite" || env.DshdBin != "/usr/local/bin/dshd" || env.Listen != "0.0.0.0:7000" || env.PreviewPort != 3000 {
+		if env.WorkspaceRoot != "/workspace" || env.TemplateDir != "/opt/templates/react-go-sqlite" || env.AgentRuntimeBin != "/usr/local/bin/agent-runtime" || env.Listen != "0.0.0.0:7000" || env.PreviewPort != 3000 {
 			return Env{}, errors.New("production paths and ports are fixed; set WSD_LOCAL=true only for trusted local acceptance")
 		}
 	}

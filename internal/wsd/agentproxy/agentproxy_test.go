@@ -24,12 +24,12 @@ func TestWhitelistAndCredentialReplacement(t *testing.T) {
 	}))
 	defer upstream.Close()
 	target, _ := url.Parse(upstream.URL)
-	handler := New(target, "dshd-secret", nil)
+	handler := New(target, "agent-runtime-secret", nil)
 	req := httptest.NewRequest(http.MethodPost, "/agent/sessions?x=1", strings.NewReader("{}"))
 	req.Header.Set("Authorization", "Bearer wsd-secret")
 	resp := httptest.NewRecorder()
 	handler.ServeHTTP(resp, req)
-	if resp.Code != http.StatusCreated || gotPath != "/v1/sessions" || gotQuery != "x=1" || gotAuth != "Bearer dshd-secret" {
+	if resp.Code != http.StatusCreated || gotPath != "/v1/sessions" || gotQuery != "x=1" || gotAuth != "Bearer agent-runtime-secret" {
 		t.Fatalf("proxy = %d %s?%s %q", resp.Code, gotPath, gotQuery, gotAuth)
 	}
 	for _, bad := range []struct{ method, path string }{
@@ -45,7 +45,7 @@ func TestWhitelistAndCredentialReplacement(t *testing.T) {
 		}
 	}
 	if calls.Load() != 1 {
-		t.Fatalf("disallowed calls reached dshd: %d", calls.Load())
+		t.Fatalf("disallowed calls reached agent-runtime: %d", calls.Load())
 	}
 }
 

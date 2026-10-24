@@ -49,13 +49,13 @@ local:
   root: %s
   wsd_bin: %s
   template_dir: %s
-  dshd_bin: %s
+  agent_runtime_bin: %s
 preview:
   domain: localhost
   scheme: http
   public_address: "{key}.preview.localhost:8081"
   cookie_secure: false
-`, filepath.Join(dir, "secret.key"), filepath.Join(dir, "control.db"), models, filepath.Join(dir, "sandboxes"), filepath.Join(dir, "wsd"), filepath.Join(dir, "template"), filepath.Join(dir, "dshd"))
+`, filepath.Join(dir, "secret.key"), filepath.Join(dir, "control.db"), models, filepath.Join(dir, "sandboxes"), filepath.Join(dir, "wsd"), filepath.Join(dir, "template"), filepath.Join(dir, "agent-runtime"))
 	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
 		t.Fatal(err)
 	}

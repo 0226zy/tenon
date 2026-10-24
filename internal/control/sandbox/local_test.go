@@ -24,7 +24,7 @@ func TestLocalDriverEnvironmentAndProcessCleanup(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Setenv("GOPROXY", "")
-	driver := NewLocalDriver(filepath.Join(root, "sandboxes"), script, filepath.Join(root, "template"), filepath.Join(root, "dshd"), "https://goproxy.cn,direct")
+	driver := NewLocalDriver(filepath.Join(root, "sandboxes"), script, filepath.Join(root, "template"), filepath.Join(root, "agent-runtime"), "https://goproxy.cn,direct")
 	t.Cleanup(func() { _ = driver.Close() })
 	convID := "abcdefghij22"
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -52,7 +52,7 @@ func TestLocalDriverEnvironmentAndProcessCleanup(t *testing.T) {
 	workspace := filepath.Join(root, "sandboxes", convID, "workspace")
 	for _, expected := range []string{
 		"WSD_LOCAL=true", "WORKSPACE_ROOT=" + workspace,
-		"WSD_TEMPLATE_DIR=" + filepath.Join(root, "template"), "WSD_DSHD_BIN=" + filepath.Join(root, "dshd"),
+		"WSD_TEMPLATE_DIR=" + filepath.Join(root, "template"), "WSD_AGENT_RUNTIME_BIN=" + filepath.Join(root, "agent-runtime"),
 		"WSD_IMAGE_VER=local-test", "WSD_PREVIEW_PORT=0", "SANDBOX_ID=instance-1",
 		"CP_INTERNAL_URL=http://127.0.0.1:8082", "LLM_PROXY_TOKEN=proxy-token", "WSD_TOKEN=wsd-token",
 	} {

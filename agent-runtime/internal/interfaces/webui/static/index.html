@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>agent-runtime · Coding Agent</title>
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <div id="side">
+    <h1>agent<span>-runtime</span> · Coding Agent</h1>
+    <div id="newbox">
+      <input id="ncwd" placeholder="项目目录（留空=服务器当前目录）">
+      <select id="nmodel"><option value="">模型：加载中…</option></select>
+      <select id="nmode">
+        <option value="auto-edit">auto-edit（默认，高风险请示）</option>
+        <option value="suggest">suggest（事事请示）</option>
+        <option value="full-auto">full-auto（全部自动）</option>
+      </select>
+      <button class="primary" onclick="createSession()">新建会话</button>
+    </div>
+    <div id="sessions"></div>
+  </div>
+  <div id="main">
+    <div id="topbar" style="display:none">
+      <span class="title" id="tid"></span>
+      <span class="meta" id="tmeta"></span>
+      <select id="modesel" onchange="setMode()">
+        <option value="suggest">suggest</option>
+        <option value="auto-edit">auto-edit</option>
+        <option value="full-auto">full-auto</option>
+      </select>
+      <button onclick="forkSession()">Fork</button>
+      <button class="danger" onclick="cancelTurn()">中断回合</button>
+    </div>
+    <div id="events"><div id="empty">选择或新建一个会话开始。Agent 的事件流（思考、工具调用、结果、审批）会实时出现在这里。</div></div>
+    <div id="composer" style="display:none">
+      <textarea id="input" placeholder="给 Agent 下达任务……（Enter 发送，Shift+Enter 换行）"></textarea>
+      <button class="primary" onclick="send()">发送</button>
+    </div>
+  </div>
+<script src="/app.js"></script>
+</body>
+</html>

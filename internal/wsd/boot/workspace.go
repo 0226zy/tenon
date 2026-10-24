@@ -9,19 +9,48 @@ import (
 	"path/filepath"
 )
 
+// migrateAgentRuntimeState performs the one-time legacy state rename without
+// copying or deleting data. If the destination exists, both paths are preserved.
+func migrateAgentRuntimeState(root string) error {
+	legacyPath := filepath.Join(root, ".dsh")
+	currentPath := filepath.Join(root, ".agent-runtime")
+	legacyInfo, err := os.Lstat(legacyPath)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("inspect legacy .dsh state: %w", err)
+	}
+	if _, err := os.Lstat(currentPath); err == nil {
+		return nil
+	} else if !os.IsNotExist(err) {
+		return fmt.Errorf("inspect .agent-runtime state: %w", err)
+	}
+	if !legacyInfo.IsDir() || legacyInfo.Mode()&os.ModeSymlink != 0 {
+		return fmt.Errorf("legacy .dsh state is not a directory; refusing to migrate %s", legacyPath)
+	}
+	if err := os.Rename(legacyPath, currentPath); err != nil {
+		return fmt.Errorf("migrate .dsh state to .agent-runtime: %w", err)
+	}
+	return nil
+}
+
 // InitWorkspace copies the template only into a missing or empty app directory.
 // Existing volumes are never reset or recommitted by wsd.
 func InitWorkspace(root string, template string) (bool, error) {
 	if root == "" || template == "" {
 		return false, errors.New("workspace root and template are required")
 	}
+	if err := migrateAgentRuntimeState(root); err != nil {
+		return false, err
+	}
 	for _, dir := range []string{
 		root,
 		filepath.Join(root, "appdata"),
 		filepath.Join(root, ".home"),
-		filepath.Join(root, ".dsh"),
-		filepath.Join(root, ".dsh", "data"),
-		filepath.Join(root, ".dsh", "checkpoints"),
+		filepath.Join(root, ".agent-runtime"),
+		filepath.Join(root, ".agent-runtime", "data"),
+		filepath.Join(root, ".agent-runtime", "checkpoints"),
 	} {
 		if err := os.MkdirAll(dir, 0o700); err != nil {
 			return false, err

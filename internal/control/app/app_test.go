@@ -69,7 +69,7 @@ func TestAppStartRecoversFinalizingRun(t *testing.T) {
 	cfg.Local.Root = filepath.Join(dir, "sandboxes")
 	cfg.Local.WSDBin = filepath.Join(dir, "wsd")
 	cfg.Local.TemplateDir = filepath.Join(dir, "template")
-	cfg.Local.DSHDBin = filepath.Join(dir, "dshd")
+	cfg.Local.AgentRuntimeBin = filepath.Join(dir, "agent-runtime")
 	cfg.AgentClient.Timeout = config.Duration{Duration: time.Second}
 	cfg.AgentClient.PreviewTimeout = config.Duration{Duration: time.Second}
 

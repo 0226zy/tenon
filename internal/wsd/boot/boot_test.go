@@ -73,11 +73,11 @@ func TestInitWorkspaceAndGeneratedConfigs(t *testing.T) {
 	cfg.Agent.MaxIterations = 80
 	cfg.Agent.TokenBudgetPerTurn = 800000
 	cfg.Agent.ContextCompressAtTokens = 96000
-	dshDir := filepath.Join(root, ".dsh")
-	if err := WriteModelsConfig(dshDir, cfg, "http://control:8082"); err != nil {
+	agentRuntimeDir := filepath.Join(root, ".agent-runtime")
+	if err := WriteModelsConfig(agentRuntimeDir, cfg, "http://control:8082"); err != nil {
 		t.Fatal(err)
 	}
-	modelsPath := filepath.Join(dshDir, "models.yaml")
+	modelsPath := filepath.Join(agentRuntimeDir, "models.yaml")
 	models, err := os.ReadFile(modelsPath)
 	if err != nil {
 		t.Fatal(err)
@@ -93,24 +93,24 @@ func TestInitWorkspaceAndGeneratedConfigs(t *testing.T) {
 	appendFile := filepath.Join(t.TempDir(), "append.md")
 	_ = os.WriteFile(base, []byte("base prompt"), 0o600)
 	_ = os.WriteFile(appendFile, []byte("platform prompt"), 0o600)
-	if err := writeSystemPrompt(base, appendFile, "control prompt", filepath.Join(dshDir, "system_prompt.md")); err != nil {
+	if err := writeSystemPrompt(base, appendFile, "control prompt", filepath.Join(agentRuntimeDir, "system_prompt.md")); err != nil {
 		t.Fatal(err)
 	}
-	if err := writeDshConfig(dshDir, cfg, "dshd-secret", filepath.Join(dshDir, "skills"), "127.0.0.1:34567"); err != nil {
+	if err := writeAgentRuntimeConfig(agentRuntimeDir, cfg, "agent-runtime-secret", filepath.Join(agentRuntimeDir, "skills"), "127.0.0.1:34567"); err != nil {
 		t.Fatal(err)
 	}
-	dshConfig, err := os.ReadFile(filepath.Join(dshDir, "dsh.yaml"))
+	agentRuntimeConfig, err := os.ReadFile(filepath.Join(agentRuntimeDir, "agent-runtime.yaml"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	text := string(dshConfig)
+	text := string(agentRuntimeConfig)
 	for _, expected := range []string{"listen: 127.0.0.1:34567", "token_budget_per_turn: 800000", "context_compress_at_tokens: 96000", "disable_webui: true", "default_mode: full-auto", "- GOWORK"} {
 		if !strings.Contains(text, expected) {
-			t.Fatalf("dsh config lacks %q:\n%s", expected, text)
+			t.Fatalf("agent-runtime config lacks %q:\n%s", expected, text)
 		}
 	}
-	if strings.Contains(text, "dshd-secret") || strings.Contains(text, "auth_token:") {
-		t.Fatalf("dsh config leaked token: %s", text)
+	if strings.Contains(text, "agent-runtime-secret") || strings.Contains(text, "auth_token:") {
+		t.Fatalf("agent-runtime config leaked token: %s", text)
 	}
 }
 
@@ -121,26 +121,26 @@ func TestProcessEnvironmentIsolatesGeneratedGoWorkspace(t *testing.T) {
 	}
 }
 
-func TestWriteDshConfigKeepsDefaultAddress(t *testing.T) {
+func TestWriteAgentRuntimeConfigKeepsDefaultAddress(t *testing.T) {
 	dir := t.TempDir()
-	if err := WriteDshConfig(dir, contract.SandboxConfig{}, "dshd-secret"); err != nil {
+	if err := WriteAgentRuntimeConfig(dir, contract.SandboxConfig{}, "agent-runtime-secret"); err != nil {
 		t.Fatal(err)
 	}
-	raw, err := os.ReadFile(filepath.Join(dir, "dsh.yaml"))
+	raw, err := os.ReadFile(filepath.Join(dir, "agent-runtime.yaml"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !strings.Contains(string(raw), "listen: 127.0.0.1:3080") {
-		t.Fatalf("default dsh config address changed:\n%s", raw)
+		t.Fatalf("default agent-runtime config address changed:\n%s", raw)
 	}
 }
 
-func TestDshdAddressSelectionAndOccupiedPrecheck(t *testing.T) {
-	productionAddress, err := allocateDshdAddress(false)
+func TestAgentRuntimeAddressSelectionAndOccupiedPrecheck(t *testing.T) {
+	productionAddress, err := allocateAgentRuntimeAddress(false)
 	if err != nil || productionAddress != "127.0.0.1:3080" {
 		t.Fatalf("production address = %q, %v", productionAddress, err)
 	}
-	localAddress, err := allocateDshdAddress(true)
+	localAddress, err := allocateAgentRuntimeAddress(true)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -154,11 +154,11 @@ func TestDshdAddressSelectionAndOccupiedPrecheck(t *testing.T) {
 	}
 	defer listener.Close()
 
-	supervisor := newDshdSupervisor(exec.Command("must-not-start"), proc.New(), localAddress)
+	supervisor := newAgentRuntimeSupervisor(exec.Command("must-not-start"), proc.New(), localAddress)
 	if supervisor.healthURL != "http://"+localAddress+"/healthz" {
 		t.Fatalf("health URL = %q for %q", supervisor.healthURL, localAddress)
 	}
-	if err := supervisor.Start(context.Background()); err == nil || !strings.Contains(err.Error(), "dshd address "+localAddress+" is unavailable") {
+	if err := supervisor.Start(context.Background()); err == nil || !strings.Contains(err.Error(), "agent-runtime address "+localAddress+" is unavailable") {
 		t.Fatalf("occupied address precheck = %v", err)
 	}
 }
@@ -169,7 +169,7 @@ func setRequiredEnv(t *testing.T) {
 	t.Setenv("CP_INTERNAL_URL", "http://127.0.0.1:8082")
 	t.Setenv("LLM_PROXY_TOKEN", "sandbox-secret")
 	t.Setenv("WSD_TOKEN", "wsd-secret")
-	for _, key := range []string{"WSD_LOCAL", "WSD_LISTEN", "WORKSPACE_ROOT", "WSD_TEMPLATE_DIR", "WSD_DSHD_BIN", "WSD_IMAGE_VER", "WSD_PREVIEW_PORT"} {
+	for _, key := range []string{"WSD_LOCAL", "WSD_LISTEN", "WORKSPACE_ROOT", "WSD_TEMPLATE_DIR", "WSD_AGENT_RUNTIME_BIN", "WSD_IMAGE_VER", "WSD_PREVIEW_PORT"} {
 		t.Setenv(key, "")
 	}
 }

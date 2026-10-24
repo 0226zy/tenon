@@ -100,7 +100,7 @@ func Open(ctx context.Context, cfg *config.Config) (_ *App, err error) {
 		if cfg.Mode != "local" {
 			return nil, fmt.Errorf("local sandbox driver requires local mode")
 		}
-		driver = sandbox.NewLocalDriver(cfg.Local.Root, cfg.Local.WSDBin, cfg.Local.TemplateDir, cfg.Local.DSHDBin, cfg.Local.GoProxy)
+		driver = sandbox.NewLocalDriver(cfg.Local.Root, cfg.Local.WSDBin, cfg.Local.TemplateDir, cfg.Local.AgentRuntimeBin, cfg.Local.GoProxy)
 	case "docker":
 		// The production driver is deliberately fail-closed until its isolation and
 		// resource-limit implementation is available.

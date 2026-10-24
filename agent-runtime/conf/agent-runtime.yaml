@@ -1,0 +1,68 @@
+# agent-runtime 服务端配置（dsh profile 的等价物：启用哪些插件、预算与熔断阈值都在此决定）
+
+server:
+  listen: "127.0.0.1:3080"
+  # 服务端部署必须配置鉴权令牌（也可用环境变量 MAGENTS_AUTH_TOKEN）；空 = 仅本机开发。
+  # 注意：监听非回环地址且令牌为空时，启动会被部署前置检查拒绝。
+  auth_token: ""
+
+# 部署安全边界（多租户/公网部署务必配置）：
+# security:
+#   allowed_cwd_roots: ["/srv/workspaces"]   # 会话工作区必须落在白名单根目录之内
+
+model:
+  # legacy 兜底段：仅当 models_file 不存在时作为种子写入；
+  # 模型资源以 models_file 为准（见 conf/models.yaml，预置 deepseek / kimi）
+  provider: openai-compat
+  base_url: "https://api.deepseek.com/v1"
+  api_key: ""
+  model: ""
+  temperature: 0.3
+  max_tokens: 8192
+  timeout_seconds: 120
+
+models_file: "../conf/models.yaml"        # LLM 模型信息资源（LLMInfoRepo 本地文件实现；后续可换 DB）
+
+skills_dir: "../skills"                 # 工程技能库（agentskills.io 兼容；目录不存在/为空 = 不启用）
+                                     # 预置 arch-design（架构/代码设计引导）+ 8 个全栈专项 skill
+
+agent:
+  max_iterations: 50                 # 全局保护性终止之一：最大迭代轮数
+  token_budget: 1000000              # 全局保护性终止之二：会话 token 预算
+  default_mode: auto-edit            # suggest / auto-edit / full-auto
+  livelock_repeat: 3                 # 相同「工具名+参数」指纹连续出现次数阈值
+  max_retries: 5                     # 可重试错误的静默重试上限（指数退避+抖动）
+  circuit_breaker_failures: 3        # 模型调用连续失败熔断阈值
+  approval_timeout_seconds: 300      # 高风险操作审批等待人类裁决的超时
+  subagent_max_iterations: 25        # 子代理（task 工具）的迭代上限，应显著小于主循环
+  context_compress_at_percent: 70    # 累计 token 达预算该百分比时压缩投影中较早的长输出（0 = 禁用；日志本体永远完整）
+  context_keep_recent: 16            # 压缩时逐字保留的最近消息条数（当前工作集）
+  system_prompt_file: "../prompt/system_prompt.md"
+
+tools:
+  bash_timeout_seconds: 120          # 单条 bash 命令超时（结构化超时错误）
+  test_timeout_seconds: 300          # run_tests 缺省超时（测试通常比单条命令慢）
+  max_output_bytes: 30000            # 工具输出截断阈值（头尾保留，全文落盘 spill）
+  grep_max_matches: 100
+  glob_max_results: 200
+
+storage:
+  data_dir: "../data/"                   # 会话日志（append-only JSONL）、spill 输出
+
+# MCP 工具生态（Model Context Protocol）：空 = 不启用。
+# 工具以 mcp__<server>__<tool> 命名注册；read_only: true 的 server 工具免审批。
+# mcp:
+#   servers:
+#     - name: filesystem
+#       command: npx
+#       args: ["-y", "@modelcontextprotocol/server-filesystem", "/data/workspace"]
+#       read_only: true
+#       timeout_seconds: 60
+
+# 部署目标：空 = 不注册 deploy 工具。命令模板固化在此，模型只能填参数；
+# deploy 在任何审批模式（含 full-auto）下都强制人工裁决。
+# deploy:
+#   targets:
+#     - name: docker-prod
+#       description: 构建镜像并推送到生产仓库
+#       command: "docker build -t registry.example.com/{{image}}:{{tag}} . && docker push registry.example.com/{{image}}:{{tag}}"

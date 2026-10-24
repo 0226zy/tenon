@@ -182,16 +182,16 @@ def main():
     try:
         probe.bind(("127.0.0.1", 3080))
     except OSError as exc:
-        raise RuntimeError("local acceptance requires the current wsd fixed dshd port 127.0.0.1:3080") from exc
+        raise RuntimeError("local acceptance requires the current wsd fixed agent-runtime port 127.0.0.1:3080") from exc
     finally:
         probe.close()
     api_port, preview_port, internal_port, metrics_port = free_ports(4)
     PORTS = {"api": api_port, "preview": preview_port, "internal": internal_port, "metrics": metrics_port}
     (TMP / "bin").mkdir()
-    print("building control, wsd and dshd...", flush=True)
+    print("building control, wsd and agent-runtime...", flush=True)
     run(["go", "build", "-o", str(TMP / "bin" / "control"), "./cmd/control"], timeout=180)
     run(["go", "build", "-o", str(TMP / "bin" / "wsd"), "./cmd/wsd"], timeout=180)
-    run(["go", "build", "-o", str(TMP / "bin" / "dshd"), "./cmd/dshd"], cwd=ROOT / "dsh-go", timeout=180)
+    run(["go", "build", "-o", str(TMP / "bin" / "agent-runtime"), "./cmd/agent-runtime"], cwd=ROOT / "agent-runtime", timeout=180)
 
     def q(path):
         return json.dumps(str(path))
@@ -224,7 +224,7 @@ local:
   root: {q(TMP / 'sandboxes')}
   wsd_bin: {q(TMP / 'bin' / 'wsd')}
   template_dir: {q(ROOT / 'image' / 'templates' / 'react-go-sqlite')}
-  dshd_bin: {q(TMP / 'bin' / 'dshd')}
+  agent_runtime_bin: {q(TMP / 'bin' / 'agent-runtime')}
   image_ver: local-e2e
 run:
   max_duration: 180s

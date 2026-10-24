@@ -53,15 +53,15 @@ func WriteModelsConfig(dir string, cfg contract.SandboxConfig, cpInternalURL str
 	return writeAtomic(filepath.Join(dir, "models.yaml"), raw, 0o600)
 }
 
-// WriteDshConfig writes no bearer token. dshdToken is required and deliberately
-// used only as a startup invariant; MAGENTS_AUTH_TOKEN remains process-only.
-func WriteDshConfig(dir string, cfg contract.SandboxConfig, dshdToken string) error {
-	return writeDshConfig(dir, cfg, dshdToken, "/opt/dsh/skills", productionDshdAddress)
+// WriteAgentRuntimeConfig writes no bearer token. agentRuntimeToken is required
+// and deliberately used only as a startup invariant; MAGENTS_AUTH_TOKEN remains process-only.
+func WriteAgentRuntimeConfig(dir string, cfg contract.SandboxConfig, agentRuntimeToken string) error {
+	return writeAgentRuntimeConfig(dir, cfg, agentRuntimeToken, "/opt/agent-runtime/skills", productionAgentRuntimeAddress)
 }
 
-func writeDshConfig(dir string, cfg contract.SandboxConfig, dshdToken, skillsDir, listenAddress string) error {
-	if dshdToken == "" {
-		return errors.New("dshd token must be generated before writing config")
+func writeAgentRuntimeConfig(dir string, cfg contract.SandboxConfig, agentRuntimeToken, skillsDir, listenAddress string) error {
+	if agentRuntimeToken == "" {
+		return errors.New("agent-runtime token must be generated before writing config")
 	}
 	workspace := filepath.Dir(dir)
 	agent := cfg.Agent
@@ -100,7 +100,7 @@ func writeDshConfig(dir string, cfg contract.SandboxConfig, dshdToken, skillsDir
 	if err != nil {
 		return err
 	}
-	return writeAtomic(filepath.Join(dir, "dsh.yaml"), raw, 0o600)
+	return writeAtomic(filepath.Join(dir, "agent-runtime.yaml"), raw, 0o600)
 }
 
 func writeSystemPrompt(basePath, appendPath, extra, output string) error {

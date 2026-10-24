@@ -1,11 +1,11 @@
 // Package contract contains the versioned cross-process DTOs shared by control,
-// wsd and the dsh-go runtime. Field changes must remain backward compatible.
+// wsd and the agent-runtime module. Field changes must remain backward compatible.
 package contract
 
 import "time"
 
 const (
-	RuntimeAPI = "dshd/1"
+	RuntimeAPI = "agent-runtime/1"
 	WSDAPI     = "wsd/1"
 )
 
@@ -42,10 +42,10 @@ type PrepareRunRequest struct {
 type RuntimeRunStatus string
 
 const (
-	RuntimePrepared    RuntimeRunStatus = "prepared"
-	RuntimeRunning     RuntimeRunStatus = "running"
-	RuntimeCancelling  RuntimeRunStatus = "cancelling"
-	RuntimeStopped     RuntimeRunStatus = "stopped"
+	RuntimePrepared   RuntimeRunStatus = "prepared"
+	RuntimeRunning    RuntimeRunStatus = "running"
+	RuntimeCancelling RuntimeRunStatus = "cancelling"
+	RuntimeStopped    RuntimeRunStatus = "stopped"
 )
 
 type RunState struct {

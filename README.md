@@ -1,9 +1,9 @@
 # proto-platform
 
-「原型构建平台」P0：以自然语言驱动 dsh-go，在隔离工作区中生成、迭代、查看并预览 React + Go + SQLite 原型。
+「原型构建平台」P0：以自然语言驱动 agent-runtime，在隔离工作区中生成、迭代、查看并预览 React + Go + SQLite 原型。
 
 - 根模块：`github.com/0226zy/proto-platform`
-- Runtime：`dsh-go/`（保留独立 module 与测试边界）
+- Runtime：`agent-runtime/`（module `github.com/0226zy/proto-platform/agent-runtime`，保留独立测试边界）
 - 控制层：`cmd/control`
 - 工作区守护：`cmd/wsd`
 - 平台前端：`web/`（Vue 3 + TypeScript + Pinia + Monaco）
@@ -25,9 +25,9 @@ npm --prefix web ci
 npm run dev -- --host 127.0.0.1 --port 7100 --strictPort
 ```
 
-打开 `http://127.0.0.1:7100/`。首次启动会构建 control、wsd、dshd，并初始化账号 `demo`；随机密码只打印在终端，同时写入权限为 `0600`、未被 Git 跟踪的 `.local/demo-password`。停止服务请在前台终端按 `Ctrl+C`。
+打开 `http://127.0.0.1:7100/`。首次启动会构建 control、wsd、agent-runtime，并初始化账号 `demo`；随机密码只打印在终端，同时写入权限为 `0600`、未被 Git 跟踪的 `.local/demo-password`。停止服务请在前台终端按 `Ctrl+C`。
 
-默认 `local-demo` 是确定性本地模型适配器，**不是外部真实模型**。它会通过真实 dsh-go 工具链写文件、执行测试并构建预览，便于无密钥复现产品流程；`local-demo-secondary` 用于验证模型切换与独立计量。SQLite、对话工作区、wsd/dshd 和生成应用进程均为真实运行。运行数据位于 `deploy/data/` 与 `.local/`，均已忽略，不应提交。
+默认 `local-demo` 是确定性本地模型适配器，**不是外部真实模型**。它会通过真实 agent-runtime 工具链写文件、执行测试并构建预览，便于无密钥复现产品流程；`local-demo-secondary` 用于验证模型切换与独立计量。SQLite、对话工作区、wsd/agent-runtime 和生成应用进程均为真实运行。运行数据位于 `deploy/data/` 与 `.local/`，均已忽略，不应提交。
 
 ## 自动化验证
 
@@ -37,8 +37,8 @@ GOTOOLCHAIN=go1.25.0 go test ./...
 GOTOOLCHAIN=go1.25.0 go test -race ./...
 
 # 独立 Runtime module
-(cd dsh-go && GOWORK=off GOTOOLCHAIN=go1.25.0 go test ./...)
-(cd dsh-go && GOWORK=off GOTOOLCHAIN=go1.25.0 go test -race ./...)
+(cd agent-runtime && GOWORK=off GOTOOLCHAIN=go1.25.0 go test ./...)
+(cd agent-runtime && GOWORK=off GOTOOLCHAIN=go1.25.0 go test -race ./...)
 
 # 前端
 npm run test:web
@@ -50,7 +50,7 @@ npm run build
 ```bash
 go build -o bin/control ./cmd/control
 go build -o bin/wsd ./cmd/wsd
-(cd dsh-go && go build -o bin/dshd ./cmd/dshd)
+(cd agent-runtime && go build -o bin/agent-runtime ./cmd/agent-runtime)
 python3 scripts/smoke_local.py
 ```
 

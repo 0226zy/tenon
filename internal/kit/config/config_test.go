@@ -28,7 +28,7 @@ local:
   root: sandboxes
   wsd_bin: bin/wsd
   template_dir: template
-  dshd_bin: bin/dshd
+  agent_runtime_bin: bin/agent-runtime
 run:
   max_duration: 2m
 `
@@ -53,7 +53,7 @@ run:
 	}
 	for name, got := range map[string]string{
 		"sqlite": cfg.SQLite.Path, "secret": cfg.Control.SecretFile, "catalog": cfg.Catalog.File,
-		"root": cfg.Local.Root, "wsd": cfg.Local.WSDBin, "template": cfg.Local.TemplateDir, "dshd": cfg.Local.DSHDBin,
+		"root": cfg.Local.Root, "wsd": cfg.Local.WSDBin, "template": cfg.Local.TemplateDir, "agent-runtime": cfg.Local.AgentRuntimeBin,
 	} {
 		if !filepath.IsAbs(got) || !strings.HasPrefix(got, dir+string(os.PathSeparator)) {
 			t.Errorf("%s path was not resolved relative to config: %q", name, got)

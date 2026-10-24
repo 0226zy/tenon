@@ -61,54 +61,54 @@ func Run(ctx context.Context, env Env) (returnErr error) {
 		return fmt.Errorf("initialize workspace: %w", err)
 	}
 	logger.Info("workspace initialized", "created", created)
-	dshDir := filepath.Join(env.WorkspaceRoot, ".dsh")
-	if err := WriteModelsConfig(dshDir, cfg, env.CPInternalURL); err != nil {
+	agentRuntimeDir := filepath.Join(env.WorkspaceRoot, ".agent-runtime")
+	if err := WriteModelsConfig(agentRuntimeDir, cfg, env.CPInternalURL); err != nil {
 		return fmt.Errorf("write models config: %w", err)
 	}
 	tokenRaw := make([]byte, 32)
 	if _, err := rand.Read(tokenRaw); err != nil {
 		return err
 	}
-	dshdToken := hex.EncodeToString(tokenRaw)
+	agentRuntimeToken := hex.EncodeToString(tokenRaw)
 	assets, err := resolveAssets(env)
 	if err != nil {
 		return err
 	}
-	if err := writeSystemPrompt(assets.basePrompt, assets.appendPrompt, cfg.SystemPromptAppend, filepath.Join(dshDir, "system_prompt.md")); err != nil {
+	if err := writeSystemPrompt(assets.basePrompt, assets.appendPrompt, cfg.SystemPromptAppend, filepath.Join(agentRuntimeDir, "system_prompt.md")); err != nil {
 		return err
 	}
-	dshdAddress, err := allocateDshdAddress(env.Local)
+	agentRuntimeAddress, err := allocateAgentRuntimeAddress(env.Local)
 	if err != nil {
 		return err
 	}
-	if err := writeDshConfig(dshDir, cfg, dshdToken, assets.skillsDir, dshdAddress); err != nil {
-		return fmt.Errorf("write dsh config: %w", err)
+	if err := writeAgentRuntimeConfig(agentRuntimeDir, cfg, agentRuntimeToken, assets.skillsDir, agentRuntimeAddress); err != nil {
+		return fmt.Errorf("write agent-runtime config: %w", err)
 	}
 
 	home := filepath.Join(env.WorkspaceRoot, ".home")
-	processEnv := dshdEnvironment(env, home, dshdToken)
-	cmd := exec.Command(env.DshdBin, "-config", filepath.Join(dshDir, "dsh.yaml"))
+	processEnv := agentRuntimeEnvironment(env, home, agentRuntimeToken)
+	cmd := exec.Command(env.AgentRuntimeBin, "-config", filepath.Join(agentRuntimeDir, "agent-runtime.yaml"))
 	cmd.Dir = filepath.Join(env.WorkspaceRoot, "app")
 	cmd.Env = processEnv
 	cmd.Stdout = os.Stderr
 	cmd.Stderr = os.Stderr
-	dshd := newDshdSupervisor(cmd, registry, dshdAddress)
-	var stopDshdOnce sync.Once
-	stopDshd := func() {
-		stopDshdOnce.Do(func() {
+	agentRuntime := newAgentRuntimeSupervisor(cmd, registry, agentRuntimeAddress)
+	var stopAgentRuntimeOnce sync.Once
+	stopAgentRuntime := func() {
+		stopAgentRuntimeOnce.Do(func() {
 			stopCtx, stopCancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer stopCancel()
-			if err := dshd.Stop(stopCtx); err != nil {
-				logger.Error("dshd stop failed", "error", err)
+			if err := agentRuntime.Stop(stopCtx); err != nil {
+				logger.Error("agent-runtime stop failed", "error", err)
 			}
 		})
 	}
-	defer stopDshd()
+	defer stopAgentRuntime()
 	startCtx, startCancel := context.WithTimeout(runCtx, 30*time.Second)
-	err = dshd.Start(startCtx)
+	err = agentRuntime.Start(startCtx)
 	startCancel()
 	if err != nil {
-		return fmt.Errorf("start dshd: %w", err)
+		return fmt.Errorf("start agent-runtime: %w", err)
 	}
 
 	fileService, err := workspacefs.New(filepath.Join(env.WorkspaceRoot, "app"), nil, 1<<20)
@@ -175,19 +175,19 @@ func Run(ctx context.Context, env Env) (returnErr error) {
 		})
 	}
 	defer stopPreview()
-	gitService := gitservice.New(filepath.Join(env.WorkspaceRoot, "app"), filepath.Join(dshDir, "checkpoints"), workspaceGate, eventBus)
-	agentURL, err := parseAgentURL("http://" + dshdAddress)
+	gitService := gitservice.New(filepath.Join(env.WorkspaceRoot, "app"), filepath.Join(agentRuntimeDir, "checkpoints"), workspaceGate, eventBus)
+	agentURL, err := parseAgentURL("http://" + agentRuntimeAddress)
 	if err != nil {
 		return err
 	}
 	server := api.NewServer(api.Deps{
 		Token: env.WSDToken, SandboxID: env.SandboxID,
-		Agent: agentproxy.New(agentURL, dshdToken, nil), Gate: workspaceGate, Proc: registry,
+		Agent: agentproxy.New(agentURL, agentRuntimeToken, nil), Gate: workspaceGate, Proc: registry,
 		FS: fileService, Preview: previewSupervisor, Git: gitService, Bus: eventBus,
 		Health: func() contract.Health {
 			healthCtx, healthCancel := context.WithTimeout(runCtx, time.Second)
 			defer healthCancel()
-			agentOK := dshd.Healthy(healthCtx)
+			agentOK := agentRuntime.Healthy(healthCtx)
 			_, workspaceErr := os.Stat(filepath.Join(env.WorkspaceRoot, "app"))
 			return contract.Health{
 				API: contract.WSDAPI, Agent: map[bool]string{true: "ok", false: "unavailable"}[agentOK],
@@ -231,11 +231,11 @@ func Run(ctx context.Context, env Env) (returnErr error) {
 	select {
 	case <-ctx.Done():
 		returnErr = nil
-	case err := <-dshd.Done():
+	case err := <-agentRuntime.Done():
 		if err == nil {
-			err = errors.New("dshd exited")
+			err = errors.New("agent-runtime exited")
 		}
-		returnErr = fmt.Errorf("dshd supervision: %w", err)
+		returnErr = fmt.Errorf("agent-runtime supervision: %w", err)
 	case err := <-serverErr:
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			returnErr = fmt.Errorf("wsd HTTP server: %w", err)
@@ -246,7 +246,7 @@ func Run(ctx context.Context, env Env) (returnErr error) {
 	_ = listener.Close() // Stop accepting new work before process teardown.
 	eventBus.Close()
 	stopPreview()
-	stopDshd()
+	stopAgentRuntime()
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer shutdownCancel()
 	if err := server.Shutdown(shutdownCtx); err != nil {
@@ -286,43 +286,43 @@ type runtimeAssets struct {
 
 func resolveAssets(env Env) (runtimeAssets, error) {
 	if !env.Local {
-		return runtimeAssets{skillsDir: "/opt/dsh/skills", basePrompt: "/opt/dsh/system_prompt.md", appendPrompt: "/opt/dsh/system_prompt.append.md"}, nil
+		return runtimeAssets{skillsDir: "/opt/agent-runtime/skills", basePrompt: "/opt/agent-runtime/system_prompt.md", appendPrompt: "/opt/agent-runtime/system_prompt.append.md"}, nil
 	}
-	dshRoot := filepath.Dir(env.DshdBin)
-	if filepath.Base(dshRoot) == "bin" {
-		dshRoot = filepath.Dir(dshRoot)
+	agentRuntimeRoot := filepath.Dir(env.AgentRuntimeBin)
+	if filepath.Base(agentRuntimeRoot) == "bin" {
+		agentRuntimeRoot = filepath.Dir(agentRuntimeRoot)
 	}
 	imageRoot := ""
 	if filepath.Base(env.TemplateDir) == "react-go-sqlite" && filepath.Base(filepath.Dir(env.TemplateDir)) == "templates" {
 		imageRoot = filepath.Dir(filepath.Dir(env.TemplateDir))
 	}
-	skillsDir := filepath.Join(env.WorkspaceRoot, ".dsh", "skills")
+	skillsDir := filepath.Join(env.WorkspaceRoot, ".agent-runtime", "skills")
 	if err := os.RemoveAll(skillsDir); err != nil {
 		return runtimeAssets{}, err
 	}
 	if err := os.MkdirAll(skillsDir, 0o700); err != nil {
 		return runtimeAssets{}, err
 	}
-	for _, source := range []string{filepath.Join(dshRoot, "skills"), filepath.Join(imageRoot, "skills")} {
+	for _, source := range []string{filepath.Join(agentRuntimeRoot, "skills"), filepath.Join(imageRoot, "skills")} {
 		if info, err := os.Stat(source); err == nil && info.IsDir() {
 			if err := copyDirectoryContents(source, skillsDir); err != nil {
 				return runtimeAssets{}, err
 			}
 		}
 	}
-	basePrompt := filepath.Join(dshRoot, "prompt", "system_prompt.md")
+	basePrompt := filepath.Join(agentRuntimeRoot, "prompt", "system_prompt.md")
 	if _, err := os.Stat(basePrompt); err != nil {
-		basePrompt = "/opt/dsh/system_prompt.md"
+		basePrompt = "/opt/agent-runtime/system_prompt.md"
 	}
 	if _, err := os.Stat(basePrompt); err != nil {
-		// A fake dshd used in trusted local contract tests need not ship the real
-		// prompt. The merged file still contains all platform append segments.
-		basePrompt = filepath.Join(env.WorkspaceRoot, ".dsh", "system_prompt.base.md")
+		// A fake agent-runtime used in trusted local contract tests need not ship
+		// the real prompt. The merged file still contains all platform append segments.
+		basePrompt = filepath.Join(env.WorkspaceRoot, ".agent-runtime", "system_prompt.base.md")
 		if err := writeAtomic(basePrompt, []byte("\n"), 0o600); err != nil {
 			return runtimeAssets{}, err
 		}
 	}
-	appendPrompt := "/opt/dsh/system_prompt.append.md"
+	appendPrompt := "/opt/agent-runtime/system_prompt.append.md"
 	if imageRoot != "" {
 		candidate := filepath.Join(imageRoot, "system_prompt.append.md")
 		if _, err := os.Stat(candidate); err == nil {
@@ -348,7 +348,7 @@ func parseAgentURL(raw string) (*url.URL, error) {
 	return parsed, nil
 }
 
-func dshdEnvironment(env Env, home, token string) []string {
+func agentRuntimeEnvironment(env Env, home, token string) []string {
 	values := baseProcessEnvironment(env, home)
 	values["LLM_PROXY_TOKEN"] = env.LLMProxyToken
 	values["MAGENTS_AUTH_TOKEN"] = token

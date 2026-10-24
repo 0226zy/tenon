@@ -21,14 +21,14 @@ type localProcess struct {
 	log  *os.File
 }
 type LocalDriver struct {
-	root, wsdBin, templateDir, dshdBin string
-	goProxy                            string
-	mu                                 sync.Mutex
-	procs                              map[string]*localProcess
+	root, wsdBin, templateDir, agentRuntimeBin string
+	goProxy                                    string
+	mu                                         sync.Mutex
+	procs                                      map[string]*localProcess
 }
 
-func NewLocalDriver(root, wsdBin, templateDir, dshdBin, goProxy string) *LocalDriver {
-	return &LocalDriver{root: root, wsdBin: wsdBin, templateDir: templateDir, dshdBin: dshdBin, goProxy: goProxy, procs: map[string]*localProcess{}}
+func NewLocalDriver(root, wsdBin, templateDir, agentRuntimeBin, goProxy string) *LocalDriver {
+	return &LocalDriver{root: root, wsdBin: wsdBin, templateDir: templateDir, agentRuntimeBin: agentRuntimeBin, goProxy: goProxy, procs: map[string]*localProcess{}}
 }
 
 var safeConv = regexp.MustCompile(`^[a-z2-7]{12}$`)
@@ -71,7 +71,7 @@ func (d *LocalDriver) Create(ctx context.Context, spec Spec) (Instance, error) {
 	cmd.Stdout = log
 	cmd.Stderr = log
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	env := []string{"PATH=" + os.Getenv("PATH"), "HOME=" + os.Getenv("HOME"), "LANG=" + os.Getenv("LANG"), "WSD_LOCAL=true", "WSD_LISTEN=127.0.0.1:" + strconv.Itoa(port), "WORKSPACE_ROOT=" + filepath.Join(dir, "workspace"), "WSD_TEMPLATE_DIR=" + d.templateDir, "WSD_DSHD_BIN=" + d.dshdBin, "WSD_IMAGE_VER=" + spec.ImageVer, "WSD_PREVIEW_PORT=0", "SANDBOX_ID=" + spec.InstID, "CP_INTERNAL_URL=" + spec.InternalURL, "LLM_PROXY_TOKEN=" + spec.ProxyToken, "WSD_TOKEN=" + spec.WSDToken}
+	env := []string{"PATH=" + os.Getenv("PATH"), "HOME=" + os.Getenv("HOME"), "LANG=" + os.Getenv("LANG"), "WSD_LOCAL=true", "WSD_LISTEN=127.0.0.1:" + strconv.Itoa(port), "WORKSPACE_ROOT=" + filepath.Join(dir, "workspace"), "WSD_TEMPLATE_DIR=" + d.templateDir, "WSD_AGENT_RUNTIME_BIN=" + d.agentRuntimeBin, "WSD_IMAGE_VER=" + spec.ImageVer, "WSD_PREVIEW_PORT=0", "SANDBOX_ID=" + spec.InstID, "CP_INTERNAL_URL=" + spec.InternalURL, "LLM_PROXY_TOKEN=" + spec.ProxyToken, "WSD_TOKEN=" + spec.WSDToken}
 	for _, k := range []string{"GOPROXY", "GOFLAGS", "GOMODCACHE", "npm_config_registry", "npm_config_cache"} {
 		if v := os.Getenv(k); v != "" {
 			env = append(env, k+"="+v)
