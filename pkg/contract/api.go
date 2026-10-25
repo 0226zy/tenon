@@ -78,6 +78,12 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
+type RegisterRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Name     string `json:"name,omitempty"`
+}
+
 type UserView struct {
 	UserID string `json:"user_id"`
 	Name   string `json:"name"`
@@ -89,6 +95,9 @@ type ModelView struct {
 	Tags    []string `json:"tags"`
 	Desc    string   `json:"desc"`
 	Default bool     `json:"default"`
+	// Ready=false 表示模型存在但运行所需凭证（api_key_env）当前不可用。
+	Ready      bool   `json:"ready"`
+	MissingEnv string `json:"missing_env,omitempty"`
 }
 
 type RunBrief struct {

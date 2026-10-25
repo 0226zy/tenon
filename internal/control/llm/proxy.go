@@ -116,7 +116,8 @@ func (p *Proxy) chat(w http.ResponseWriter, r *http.Request, principal sandbox.P
 	}
 	up, err := p.cat.Resolve(req.Model)
 	if err != nil {
-		httpx.WriteError(w, httpx.E(503, "UPSTREAM_NOT_CONFIGURED", "model is not configured"))
+		// 运行中途才发现凭证缺失：返回与发送前一致的错误码，便于前端统一提示。
+		httpx.WriteError(w, httpx.E(503, "LLM_NOT_CONFIGURED", err.Error()))
 		return
 	}
 	promptUsed, complUsed, err := p.usage.SumByRun(r.Context(), runID)

@@ -1,13 +1,20 @@
 export const ERROR_MESSAGES: Record<string, string> = {
   UNAUTHENTICATED: '登录已失效，请重新登录',
-  NOT_FOUND: '对话不存在或已删除',
-  RUN_IN_PROGRESS: '当前对话正在执行，请等待完成或先取消',
+  USER_EXISTS: '用户名已被占用，请换一个',
+  WEAK_PASSWORD: '密码至少需要 8 个字符',
+  LONG_PASSWORD: '密码不能超过 128 个字符',
+  BAD_USER: '用户名只能包含字母、数字、下划线、点或短横线（1–64 位）',
+  BAD_NAME: '昵称不能超过 64 个字符',
+  LLM_NOT_CONFIGURED: '模型未配置：请联系管理员配置 API Key',
+  UPSTREAM_NOT_CONFIGURED: '模型未配置：请联系管理员配置 API Key',
+  NOT_FOUND: '项目不存在或已删除',
+  RUN_IN_PROGRESS: '当前项目正在执行，请等待完成或先取消',
   IDEMPOTENCY_CONFLICT: '请求编号冲突，请重新发送',
   QUOTA_EXCEEDED: '排队任务已达上限，请稍后再试',
-  CONV_LIMIT: '对话数已达上限，请删除不用的对话',
+  CONV_LIMIT: '项目数已达上限，请删除不用的项目',
   EMPTY: '请输入内容',
   TOO_LONG: '内容超过 20000 字，请精简',
-  BAD_MODEL: '模型不可用，请重新选择',
+  BAD_MODEL: '当前模型不可用，请联系管理员',
   SANDBOX_STARTING: '工作区启动中',
   SANDBOX_BUSY: '平台资源繁忙，请稍后再试',
   TOO_LARGE: '文件过大，不在线展示',
@@ -79,12 +86,14 @@ export function errorMessage(error: unknown, context?: 'login'): string {
   const apiError = asApiError(error)
   if (context === 'login' && apiError.status === 401) return '用户名或密码错误'
   if (context === 'login' && apiError.status === 429) return '尝试次数过多，请 15 分钟后再试'
+  // 具体缺哪个环境变量只有后端知道，优先展示服务端说明（例如 TENON_MYSQL... / DEEPSEEK_API_KEY）。
+  if (apiError.code === 'LLM_NOT_CONFIGURED' && apiError.serverMessage) return apiError.serverMessage
   const known = ERROR_MESSAGES[apiError.code]
   if (known) return known
   return `操作失败，请稍后重试（错误码 ${apiError.code}）`
 }
 
 export function runErrorMessage(code?: string): string {
-  if (!code) return '执行失败，请重新执行或切换模型后重试'
+  if (!code) return '执行失败，请重新执行或联系管理员'
   return ERROR_MESSAGES[code] || `执行失败（错误码 ${code}）`
 }

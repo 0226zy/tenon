@@ -35,31 +35,41 @@ func validate(path string) error {
 	}
 	return nil
 }
-func (s *Service) handle(ctx context.Context, userID, convID string) (sandbox.Handle, error) {
+
+// handle 返回沙箱句柄与状态：0 表示该对话从未创建工作区（首轮执行前），
+// 调用方应返回空结果而不是拉起沙箱；其它非 2 状态表示已有工作区正在启动/恢复。
+func (s *Service) handle(ctx context.Context, userID, convID string) (sandbox.Handle, int, error) {
 	if _, err := s.st.ConversationOwned(ctx, s.st.DB(), userID, convID); err != nil {
-		return sandbox.Handle{}, store.ErrNotFound
+		return sandbox.Handle{}, 0, store.ErrNotFound
 	}
 	h, status, err := s.sb.Lookup(ctx, convID)
 	if err != nil {
-		return h, err
+		return h, status, err
 	}
-	if status != 2 {
-		s.sb.EnsureAsync(convID)
-		e := httpx.E(503, "SANDBOX_STARTING", "sandbox is starting")
-		e.Header = make(http.Header)
-		e.Header.Set("Retry-After", "3")
-		return h, e
+	if status == 2 {
+		s.sb.Touch(convID)
+		return h, status, nil
 	}
-	s.sb.Touch(convID)
-	return h, nil
+	if status == 0 || status == 5 {
+		// 5=已删除/已回收：视为没有工作区，绝不自动重启。
+		return h, 0, nil
+	}
+	s.sb.EnsureAsync(convID)
+	e := httpx.E(503, "SANDBOX_STARTING", "sandbox is starting")
+	e.Header = make(http.Header)
+	e.Header.Set("Retry-After", "3")
+	return h, status, e
 }
 func (s *Service) Tree(ctx context.Context, userID, convID, path string) ([]contract.FileEntry, error) {
 	if err := validate(path); err != nil {
 		return nil, err
 	}
-	h, err := s.handle(ctx, userID, convID)
+	h, status, err := s.handle(ctx, userID, convID)
 	if err != nil {
 		return nil, err
+	}
+	if status == 0 {
+		return []contract.FileEntry{}, nil
 	}
 	entries, err := s.ac.Tree(ctx, h, path, 1)
 	return entries, mapError(err)
@@ -71,9 +81,12 @@ func (s *Service) Content(ctx context.Context, userID, convID, path, ifNoneMatch
 	if err := validate(path); err != nil {
 		return contract.FileContent{}, false, err
 	}
-	h, err := s.handle(ctx, userID, convID)
+	h, status, err := s.handle(ctx, userID, convID)
 	if err != nil {
 		return contract.FileContent{}, false, err
+	}
+	if status == 0 {
+		return contract.FileContent{}, false, httpx.E(404, "NOT_FOUND", "workspace has no files yet")
 	}
 	v, err := s.ac.File(ctx, h, path, s.max)
 	if err != nil {

@@ -47,6 +47,7 @@ func NewRouter(deps Dependencies) http.Handler {
 	r := &Router{deps: deps}
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/login", r.login)
+	mux.HandleFunc("POST /api/register", r.register)
 	mux.HandleFunc("POST /api/logout", r.logout)
 	mux.Handle("GET /api/me", r.secure(http.HandlerFunc(r.me)))
 	mux.Handle("GET /api/models", r.secure(http.HandlerFunc(r.models)))
@@ -107,6 +108,11 @@ func principal(ctx context.Context) auth.Principal {
 	return p
 }
 
+func (r *Router) setSessionCookie(w http.ResponseWriter, raw string, exp time.Time) {
+	cfg := r.deps.Config.Auth
+	http.SetCookie(w, &http.Cookie{Name: cfg.CookieName, Value: raw, Path: "/", HttpOnly: true, Secure: cfg.CookieSecure, SameSite: http.SameSiteLaxMode, Expires: exp, MaxAge: max(1, int(time.Until(exp).Seconds()))})
+}
+
 func (r *Router) login(w http.ResponseWriter, req *http.Request) {
 	var in contract.LoginRequest
 	if err := httpx.Decode(w, req, &in); err != nil {
@@ -118,9 +124,24 @@ func (r *Router) login(w http.ResponseWriter, req *http.Request) {
 		writeError(w, err)
 		return
 	}
-	cfg := r.deps.Config.Auth
-	http.SetCookie(w, &http.Cookie{Name: cfg.CookieName, Value: raw, Path: "/", HttpOnly: true, Secure: cfg.CookieSecure, SameSite: http.SameSiteLaxMode, Expires: exp, MaxAge: max(1, int(time.Until(exp).Seconds()))})
+	r.setSessionCookie(w, raw, exp)
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// register 开放自助注册；注册成功即签发会话，浏览器无需再次登录。
+func (r *Router) register(w http.ResponseWriter, req *http.Request) {
+	var in contract.RegisterRequest
+	if err := httpx.Decode(w, req, &in); err != nil {
+		writeError(w, err)
+		return
+	}
+	p, raw, exp, err := r.deps.Auth.Register(req.Context(), in.Username, in.Name, in.Password, auth.RemoteIP(req))
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	r.setSessionCookie(w, raw, exp)
+	httpx.JSON(w, http.StatusCreated, contract.UserView{UserID: p.UserID, Name: p.Name})
 }
 func (r *Router) logout(w http.ResponseWriter, req *http.Request) {
 	cfg := r.deps.Config.Auth

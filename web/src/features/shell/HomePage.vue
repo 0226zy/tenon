@@ -1,25 +1,26 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { AlertCircle, Code2, MessageSquareText, MonitorPlay, RefreshCw } from 'lucide-vue-next'
+import { AlertCircle, Code2, MessageSquareText, MonitorPlay, PanelRightOpen, RefreshCw } from 'lucide-vue-next'
 import { useConversationsStore } from '@/stores/conversations'
-import { useModelsStore } from '@/stores/models'
 import { useChatStore } from '@/stores/chat'
 import { useUiStore } from '@/stores/ui'
+import { useAuthStore } from '@/stores/auth'
 import { ApiError, errorMessage } from '@/api/errors'
 import { conversationTitle } from '@/utils/format'
 import type { ExamplePrompt } from '@/constants/examples'
 import ConversationSidebar from '@/features/conversation-list/ConversationSidebar.vue'
 import ChatPanel from '@/features/chat/ChatPanel.vue'
+import AuthDialog from '@/features/login/AuthDialog.vue'
 import WelcomePage from './WelcomePage.vue'
 import WorkspacePanel from './WorkspacePanel.vue'
 
 const route = useRoute()
 const router = useRouter()
 const conversations = useConversationsStore()
-const models = useModelsStore()
 const chat = useChatStore()
 const ui = useUiStore()
+const auth = useAuthStore()
 const pageError = ref<unknown>(null)
 const creating = ref(false)
 let enterVersion = 0
@@ -55,18 +56,40 @@ async function enterConversation(id: string): Promise<void> {
 }
 
 async function createConversation(example?: ExamplePrompt): Promise<void> {
+  // 游客可以浏览首页，真正创建对话时才要求登录或注册。
+  // 刷新后会话可能尚未回填，先确认一次登录态，避免把已登录用户当成游客。
+  if (!auth.authenticated) await auth.ensure().catch(() => null)
+  if (!auth.authenticated) {
+    ui.openAuth({ type: 'create', example })
+    return
+  }
   if (creating.value) return
   creating.value = true
   try {
-    await models.load().catch(() => undefined)
-    const conversation = await conversations.create(models.defaultModel?.id)
+    const conversation = await conversations.create()
     if (example) chat.setDraft(conversation.id, example.prompt)
     await router.push(`/c/${conversation.id}`)
   } catch (error) {
+    if (error instanceof ApiError && error.status === 401) {
+      ui.openAuth({ type: 'create', example })
+      return
+    }
     ui.error(error)
   } finally {
     creating.value = false
   }
+}
+
+/** 登录/注册成功后继续刚才被拦截的动作，避免用户二次点击。 */
+async function onAuthSuccess(): Promise<void> {
+  const intent = ui.authIntent
+  ui.closeAuth()
+  if (!intent) return
+  if (intent.type === 'redirect') {
+    await router.replace(intent.path)
+    return
+  }
+  await createConversation(intent.example)
 }
 
 watch(cid, (id) => { void enterConversation(id) }, { immediate: true })
@@ -124,7 +147,7 @@ onBeforeUnmount(stopDrag)
       <header class="chat-header">
         <div class="chat-header__title">
           <span class="chat-header__icon"><MessageSquareText :size="17" /></span>
-          <div><strong>{{ cid ? conversationTitle(current) : '工作区首页' }}</strong><small v-if="cid">{{ current?.model || chat.modelByConv[cid] || '默认模型' }}</small></div>
+          <div><strong>{{ cid ? conversationTitle(current) : '工作区首页' }}</strong></div>
         </div>
         <div class="chat-header__actions">
           <button class="button button--secondary button--small" type="button" @click="ui.showWorkspace('code')"><Code2 :size="14" />代码</button>
@@ -132,7 +155,7 @@ onBeforeUnmount(stopDrag)
         </div>
       </header>
       <div v-if="pageError" class="page-error" role="alert">
-        <AlertCircle :size="28" /><h2>对话暂时无法加载</h2><p>{{ errorMessage(pageError) }}</p>
+        <AlertCircle :size="28" /><h2>项目暂时无法加载</h2><p>{{ errorMessage(pageError) }}</p>
         <button class="button button--primary" type="button" @click="enterConversation(cid)"><RefreshCw :size="15" />重新加载</button>
       </div>
       <ChatPanel v-else-if="cid" :cid="cid" />
@@ -140,6 +163,7 @@ onBeforeUnmount(stopDrag)
     </section>
 
     <button
+      v-if="!ui.workspaceCollapsed"
       class="workspace-resizer"
       type="button"
       role="separator"
@@ -152,8 +176,23 @@ onBeforeUnmount(stopDrag)
       @keydown="resizeWithKeyboard"
     ><span /></button>
     <button v-if="ui.mobileWorkspaceOpen" class="workspace-backdrop" aria-label="关闭工作区" @click="ui.mobileWorkspaceOpen = false" />
-    <div class="workspace-container" :class="{ 'workspace-container--open': ui.mobileWorkspaceOpen }" :style="workspaceStyle">
+    <div v-if="!ui.workspaceCollapsed" class="workspace-container" :class="{ 'workspace-container--open': ui.mobileWorkspaceOpen }" :style="workspaceStyle">
       <WorkspacePanel :cid="cid" />
     </div>
+    <aside v-else class="workspace-rail" aria-label="代码与预览已收起">
+      <button class="workspace-rail__button workspace-rail__expand" type="button" aria-label="展开代码与预览" title="展开代码与预览" @click="ui.toggleWorkspace()">
+        <PanelRightOpen :size="16" />
+      </button>
+      <span class="workspace-rail__divider" />
+      <button class="workspace-rail__button" type="button" aria-label="展开代码" title="代码" @click="ui.showWorkspace('code')"><Code2 :size="16" /></button>
+      <button class="workspace-rail__button" type="button" aria-label="展开预览" title="预览" @click="ui.showWorkspace('preview')"><MonitorPlay :size="16" /></button>
+      <span class="workspace-rail__label">代码与预览</span>
+    </aside>
+    <AuthDialog
+      v-if="ui.authDialogOpen"
+      :tab="ui.authDialogTab"
+      @close="ui.closeAuth()"
+      @success="onAuthSuccess"
+    />
   </main>
 </template>

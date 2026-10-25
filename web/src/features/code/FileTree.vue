@@ -26,7 +26,7 @@ async function refresh(): Promise<void> {
       <div v-else-if="root.error && !root.loaded" class="tree-error" role="alert"><p>目录加载失败</p><button type="button" @click="workspace.loadDir(cid, '', Date.now(), true)">重试</button></div>
       <template v-else>
         <FileTreeNode v-for="entry in root.entries" :key="entry.path" :cid="cid" :entry="entry" :depth="0" />
-        <p v-if="root.loaded && !root.entries.length" class="file-tree-empty file-tree-empty--root">工作区暂无文件</p>
+        <p v-if="root.loaded && !root.entries.length" class="file-tree-empty file-tree-empty--root">还没有生成代码，发送需求后会显示在这里</p>
       </template>
     </div>
     <footer class="file-tree__legend"><span class="change-dot change-dot--exact" />本轮改动</footer>

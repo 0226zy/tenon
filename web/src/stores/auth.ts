@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 import { api } from '@/api'
 import { ApiError } from '@/api/errors'
 import { sseManager } from '@/events/sse'
+import { useConversationsStore } from './conversations'
 import type { UserView } from '@/types/contract'
 
 export const useAuthStore = defineStore('auth', () => {
@@ -55,9 +56,23 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function register(username: string, password: string, name = ''): Promise<UserView> {
+    loading.value = true
+    try {
+      const result = await api.auth.register({ username, password, name: name.trim() || undefined })
+      user.value = result
+      checked.value = true
+      lockedUntil.value = 0
+      return result
+    } finally {
+      loading.value = false
+    }
+  }
+
   function clear(): void {
     user.value = null
     checked.value = true
+    useConversationsStore().reset()
     sseManager.closeAll()
   }
 
@@ -65,5 +80,5 @@ export const useAuthStore = defineStore('auth', () => {
     try { await api.auth.logout() } finally { clear() }
   }
 
-  return { user, checked, loading, lockedUntil, authenticated, ensure, login, logout, clear }
+  return { user, checked, loading, lockedUntil, authenticated, ensure, login, register, logout, clear }
 })

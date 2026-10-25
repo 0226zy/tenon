@@ -8,7 +8,15 @@
 
 2026-10-24 已实际执行：根 module 与 `agent-runtime/` 的全量 `go test ./...` 和 `go test -race ./...`；前端 22 个测试文件、58 项测试及生产构建；`python3 scripts/smoke_local.py`；Chrome `155.0.8059.85` 全量 `npm run test:e2e`。Chrome 结果包含 Tenon 页面标题、登录与侧栏品牌断言，以及 CSP 内联脚本阻断、真实工具退出码 17、预览构建失败、六次写入恢复、隔离休眠与自动唤醒。运行命令见 `README.md`，结果保存在未跟踪的 `.local/last-smoke.json` 与 `.local/e2e/result.json`。
 
+2026-10-25 MySQL 存储验证：在 82.156.224.101（Ubuntu 24.04 / MySQL 8.0.46）以管理员账号建库建表，创建仅有 `SELECT/INSERT/UPDATE` 的 `tenon_app` 账号；应用通过 `CONTROL_DB_DRIVER=mysql` + `CONTROL_MYSQL_*` 环境变量连接（本机经 SSH 隧道）。实测登录、创建对话、提交 Run、事件/消息/用量落库、Run 终态与 commit、登出后 401 均正常；账号执行 `DELETE`/`CREATE` 返回 1142 拒绝，`SELECT ... FOR UPDATE` 可用。根 module `go test ./...`、前端 24 文件/67 测试与生产构建通过。
+
+2026-10-25 模型配置动态化验证：修改 `deploy/models.local.yaml` 后未重启即通过 `/api/models` 看到新增/移除；新增需要 `DEEPSEEK_API_KEY` 的模型时服务正常启动，`/api/models` 返回 `ready=false`/`missing_env`，发起对话返回 409 `LLM_NOT_CONFIGURED` 并携带变量名；前端显示“未配置”标记、输入区告警、toast 与失败气泡。沙箱启动快照缺少新模型时，切到新模型仍可完成 Run（运行时回退到控制层代理）。根 module 与 agent-runtime 的 `go test ./...`、前端 24 文件/67 测试与生产构建通过。
+
+2026-10-25 Linux 部署验收：lang=linux/amd64 静态编译 control/wsd/agent-runtime，部署包只含二进制、前端产物与运行期资产（无后端源码）。服务器 82.156.224.101 安装 MySQL 8.0.46、Go 1.27.3、Node 22.23.4、nginx 1.24 后部署到 `/data/server`，systemd 服务与 nginx 均 enabled；公网完成登录、创建对话、Run 完成与事件/消息/用量落库，预览构建 ready 且本机可访问页面与静态资源。已知限制：云安全组未放行 8081，且 80 端口对未备案域名拦截，预览需放行 8081 或使用已备案域名。
+
 默认模型是可复现的本地确定性 demo，不是外部真实模型；真实 agent-runtime 工具、进程、SQLite、文件修改和预览构建均实际执行。S6 的 prompt tokens 压缩由阈值与投影单测覆盖，不把 local-demo 结果当作真实上游模型质量或故障验收。
+
+2026-10-25 账号入口调整（游客浏览 + 创建时登录/注册）的验证：根 module 全量 `go test ./...` 通过；前端 24 个测试文件、67 项测试与生产构建通过；Playwright 脚本在真实 Chrome 中实测游客首页不跳登录、不发受保护请求，点击新建对话弹出登录/注册，注册返回 201 后自动登录并继续创建对话，登录后刷新仍保持登录态。全量 `npm run test:e2e` 本轮未跑通：卡在既有的 `verifyFailureAndRetry`（连续多轮 Run 后前端 composer 仍禁用，服务端 Run 已 `run_finished`；同一对话重新加载后状态正确），该路径属于 chat/SSE 状态收敛，不在本次账号入口改动范围内，仍需单独排查。
 
 ## Runtime
 
@@ -49,9 +57,11 @@
 ## Chrome 产品验收
 
 - [x] 登录、错误/停用账号、锁定、登出、401 安全回跳。
+- [x] 游客可直接浏览首页与示例，不请求受保护接口；新建对话时才弹出登录/注册，注册成功（201，Argon2id 落库、按来源地址限流）即自动登录并继续创建。
 - [x] 对话新建、切换、行内重命名、删除、自动标题、状态和分页。
+- [x] 新建对话不立即创建工作区；首轮 Run 才初始化（模板复制、git commit、agent 配置、wsd/agent-runtime），已有工作区在沙箱停止后按需恢复；重启中断留下的 creating 行会被回收。
 - [x] 发送、乐观回显、网络重试复用请求号、取消中、终态后重新执行。
-- [x] 排队/执行/取消/收尾状态准确；活跃时输入和模型选择禁用。
+- [x] 排队/执行/取消/收尾状态准确；活跃时输入禁用；前端不渲染模型选择，创建对话与发送消息均不携带模型。
 - [x] 工具调用/结果按 call_id 配对；失败标红；截断提示；bash 终端样式。
 - [x] 刷新后聊天历史一致；断网 30 秒恢复后无重复、无缺失。
 - [x] 流式 delta 不重复，完整文本到达后替换缓冲。

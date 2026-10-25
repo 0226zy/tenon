@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { errorMessage } from '@/api/errors'
+import type { ExamplePrompt } from '@/constants/examples'
 
 export interface Toast {
   id: number
@@ -9,12 +10,23 @@ export interface Toast {
   closing?: boolean
 }
 
+export type AuthTab = 'login' | 'register'
+
+/** 登录/注册成功之后要继续的动作：创建对话（可带示例），或回到受限页面。 */
+export type AuthIntent =
+  | { type: 'create'; example?: ExamplePrompt }
+  | { type: 'redirect'; path: string }
+
 let nextToastId = 1
 export const useUiStore = defineStore('ui', () => {
   const toasts = ref<Toast[]>([])
   const sidebarCollapsed = ref(localStorage.getItem('proto.sidebar.collapsed') === '1')
+  const workspaceCollapsed = ref(localStorage.getItem('proto.workspace.collapsed') === '1')
   const workspaceTab = ref<'code' | 'preview'>('code')
   const mobileWorkspaceOpen = ref(false)
+  const authDialogOpen = ref(false)
+  const authDialogTab = ref<AuthTab>('login')
+  const authIntent = ref<AuthIntent | null>(null)
 
   function dismiss(id: number): void {
     toasts.value = toasts.value.filter((toast) => toast.id !== id)
@@ -37,10 +49,36 @@ export const useUiStore = defineStore('ui', () => {
     localStorage.setItem('proto.sidebar.collapsed', sidebarCollapsed.value ? '1' : '0')
   }
 
+  function setWorkspaceCollapsed(collapsed: boolean): void {
+    workspaceCollapsed.value = collapsed
+    localStorage.setItem('proto.workspace.collapsed', collapsed ? '1' : '0')
+    if (collapsed) mobileWorkspaceOpen.value = false
+  }
+
+  function toggleWorkspace(): void {
+    setWorkspaceCollapsed(!workspaceCollapsed.value)
+  }
+
   function showWorkspace(tab: 'code' | 'preview'): void {
     workspaceTab.value = tab
+    setWorkspaceCollapsed(false)
     mobileWorkspaceOpen.value = true
   }
 
-  return { toasts, sidebarCollapsed, workspaceTab, mobileWorkspaceOpen, dismiss, push, error, toggleSidebar, showWorkspace }
+  function openAuth(intent: AuthIntent | null = null, tab: AuthTab = 'login'): void {
+    authIntent.value = intent
+    authDialogTab.value = tab
+    authDialogOpen.value = true
+  }
+
+  function closeAuth(): void {
+    authDialogOpen.value = false
+    authIntent.value = null
+  }
+
+  return {
+    toasts, sidebarCollapsed, workspaceCollapsed, workspaceTab, mobileWorkspaceOpen,
+    authDialogOpen, authDialogTab, authIntent,
+    dismiss, push, error, toggleSidebar, setWorkspaceCollapsed, toggleWorkspace, showWorkspace, openAuth, closeAuth,
+  }
 })

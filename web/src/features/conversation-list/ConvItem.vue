@@ -69,7 +69,7 @@ async function remove(): Promise<void> {
   try {
     await conversations.remove(props.conversation.id)
     confirmOpen.value = false
-    ui.push('对话已删除', 'success')
+    ui.push('项目已删除', 'success')
     emit('deleted')
     if (props.active) await router.replace('/')
   } catch (error) {
@@ -88,7 +88,7 @@ async function remove(): Promise<void> {
         v-model="draft"
         class="text-input"
         maxlength="128"
-        aria-label="对话标题"
+        aria-label="项目标题"
         :disabled="saving"
         @keydown.enter.prevent="save"
         @keydown.esc.prevent="cancelEdit"
@@ -110,14 +110,14 @@ async function remove(): Promise<void> {
       </span>
     </button>
     <div v-if="!editing" class="conv-item__actions">
-      <button class="icon-button" type="button" aria-label="重命名对话" title="重命名" @click.stop="startEdit"><Pencil :size="14" /></button>
-      <button class="icon-button icon-button--danger" type="button" aria-label="删除对话" title="删除" @click.stop="confirmOpen = true"><Trash2 :size="14" /></button>
+      <button class="icon-button" type="button" aria-label="重命名项目" title="重命名" @click.stop="startEdit"><Pencil :size="14" /></button>
+      <button class="icon-button icon-button--danger" type="button" aria-label="删除项目" title="删除" @click.stop="confirmOpen = true"><Trash2 :size="14" /></button>
     </div>
     <ConfirmDialog
       v-if="confirmOpen"
-      title="删除这个对话？"
-      description="删除后对话记录与工作区不可恢复。进行中的任务会先取消。"
-      confirm-text="删除对话"
+      title="删除这个项目？"
+      description="删除后项目记录与工作区不可恢复。进行中的任务会先取消。"
+      confirm-text="删除项目"
       :busy="deleting"
       @cancel="confirmOpen = false"
       @confirm="remove"

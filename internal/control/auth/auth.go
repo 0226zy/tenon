@@ -14,6 +14,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"github.com/0226zy/tenon/internal/control/store"
 	"github.com/0226zy/tenon/internal/kit/config"
@@ -34,14 +35,27 @@ type Service struct {
 	dummy    string
 	mu       sync.Mutex
 	failures map[string]*failure
+	regMu    sync.Mutex
+	regs     map[string]*regWindow
 }
 type failure struct {
 	Count              int
 	First, LockedUntil time.Time
 }
+type regWindow struct {
+	Count int
+	Start time.Time
+}
+
+const (
+	defaultRegisterLimit  = 10
+	defaultRegisterWindow = time.Hour
+	maxPasswordBytes      = 128
+	maxDisplayNameRunes   = 64
+)
 
 func New(st *store.Store, ids idgen.IDGen, cfg config.Auth) *Service {
-	s := &Service{st: st, ids: ids, cfg: cfg, failures: map[string]*failure{}}
+	s := &Service{st: st, ids: ids, cfg: cfg, failures: map[string]*failure{}, regs: map[string]*regWindow{}}
 	s.dummy, _ = s.HashPassword("not-the-user-password")
 	return s
 }
@@ -113,8 +127,12 @@ func (s *Service) Login(ctx context.Context, userID, password, ip string) (strin
 	s.mu.Lock()
 	delete(s.failures, key)
 	s.mu.Unlock()
+	return s.issueSession(ctx, userID)
+}
+
+func (s *Service) issueSession(ctx context.Context, userID string) (string, time.Time, error) {
 	raw := s.ids.Token()
-	exp := now.Add(s.cfg.SessionTTL.Duration)
+	exp := time.Now().UTC().Add(s.cfg.SessionTTL.Duration)
 	if err := s.st.PutSession(ctx, s.st.DB(), &store.AuthSession{Hash: secret.Hash(raw), UserID: userID, ExpiresAt: exp}); err != nil {
 		return "", time.Time{}, err
 	}
@@ -157,6 +175,75 @@ func (s *Service) CreateUser(ctx context.Context, userID, name, password string,
 	}
 	return err
 }
+
+// Register 创建自助注册账号并立即签发会话；用户名/密码规则与管理员创建账号保持一致。
+// 同一来源地址在窗口期内可注册的账号数受 register_limit/register_window 限制。
+func (s *Service) Register(ctx context.Context, userID, name, password, ip string) (Principal, string, time.Time, error) {
+	userID = strings.TrimSpace(userID)
+	name = strings.TrimSpace(name)
+	if !usernamePattern.MatchString(userID) {
+		return Principal{}, "", time.Time{}, httpx.E(http.StatusBadRequest, "BAD_USER", "username must be 1-64 characters of letters, digits, dot, dash or underscore")
+	}
+	if name == "" {
+		name = userID
+	}
+	if utf8.RuneCountInString(name) > maxDisplayNameRunes {
+		return Principal{}, "", time.Time{}, httpx.E(http.StatusBadRequest, "BAD_NAME", "display name must be at most 64 characters")
+	}
+	if len(password) < 8 {
+		return Principal{}, "", time.Time{}, httpx.E(http.StatusBadRequest, "WEAK_PASSWORD", "password must contain at least 8 bytes")
+	}
+	if len(password) > maxPasswordBytes {
+		return Principal{}, "", time.Time{}, httpx.E(http.StatusBadRequest, "LONG_PASSWORD", "password must contain at most 128 bytes")
+	}
+	if retry := s.reserveRegistration(ip); retry > 0 {
+		err := httpx.E(http.StatusTooManyRequests, "RATE_LIMITED", "too many registrations from this address")
+		err.Header = make(http.Header)
+		err.Header.Set("Retry-After", fmt.Sprint(int(retry.Seconds())+1))
+		return Principal{}, "", time.Time{}, err
+	}
+	if err := s.CreateUser(ctx, userID, name, password, 0); err != nil {
+		return Principal{}, "", time.Time{}, err
+	}
+	raw, exp, err := s.issueSession(ctx, userID)
+	if err != nil {
+		return Principal{}, "", time.Time{}, err
+	}
+	return Principal{UserID: userID, Name: name}, raw, exp, nil
+}
+
+// reserveRegistration 返回 0 表示本次注册放行，否则返回窗口剩余时间。
+func (s *Service) reserveRegistration(ip string) time.Duration {
+	limit := s.cfg.RegisterLimit
+	if limit <= 0 {
+		limit = defaultRegisterLimit
+	}
+	window := s.cfg.RegisterWindow.Duration
+	if window <= 0 {
+		window = defaultRegisterWindow
+	}
+	now := time.Now().UTC()
+	s.regMu.Lock()
+	defer s.regMu.Unlock()
+	if len(s.regs) > 4096 {
+		for key, item := range s.regs {
+			if now.Sub(item.Start) >= window {
+				delete(s.regs, key)
+			}
+		}
+	}
+	item := s.regs[ip]
+	if item == nil || now.Sub(item.Start) >= window {
+		s.regs[ip] = &regWindow{Count: 1, Start: now}
+		return 0
+	}
+	if item.Count >= limit {
+		return item.Start.Add(window).Sub(now)
+	}
+	item.Count++
+	return 0
+}
+
 func (s *Service) SetPassword(ctx context.Context, userID, password string) error {
 	hash, err := s.HashPassword(password)
 	if err != nil {

@@ -1,0 +1,33 @@
+/* 登录 / 注册共用表单的页签 */
+.auth-tabs { display: flex; gap: 4px; padding: 4px; margin-bottom: 20px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-subtle); }
+.auth-tabs button { flex: 1; height: 36px; border: 0; border-radius: 9px; background: transparent; color: var(--muted); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .16s ease, color .16s ease, box-shadow .16s ease; }
+.auth-tabs button:hover { color: var(--text); }
+.auth-tabs button.active { background: #fff; color: var(--text); box-shadow: 0 1px 3px rgb(28 34 51 / 10%); }
+.auth-tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* 创建对话前弹出的登录 / 注册弹窗 */
+.auth-dialog { z-index: 1200; }
+.auth-dialog__panel { position: relative; width: min(430px, 100%); max-height: calc(100dvh - 40px); overflow: auto; padding: 26px 30px 30px; border-radius: 18px; background: #fff; box-shadow: 0 24px 70px rgb(20 25 40 / 24%); }
+.auth-dialog__close { position: absolute; right: 12px; top: 12px; }
+.auth-dialog__brand { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 650; }
+.auth-dialog__hint { margin: 6px 0 18px; color: var(--muted); font-size: 12px; }
+.auth-dialog .login-form { width: 100%; }
+.auth-dialog .login-form h2 { font-size: 23px; }
+.auth-dialog .login-form__intro { margin-bottom: 18px; font-size: 13px; }
+.auth-dialog .login-form__help { margin-top: 14px; }
+body.is-modal-open { overflow: hidden; }
+
+/* 登录页：不上号也能先回首页浏览 */
+.login-form-stack { width: min(380px, 100%); }
+.login-form__back { margin: 14px 0 0; text-align: center; }
+.login-form__back button { display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px; border: 0; border-radius: 7px; background: transparent; color: var(--muted); font: inherit; font-size: 12px; cursor: pointer; }
+.login-form__back button:hover { color: var(--accent); background: var(--surface-subtle); }
+
+/* 侧栏游客状态 */
+.sidebar-empty--guest { padding-top: 34px; }
+.sidebar-empty--guest .button { margin-top: 2px; }
+.sidebar-user__button--guest strong { color: var(--accent); }
+
+@media (max-width: 720px) {
+  .auth-dialog__panel { padding: 22px 20px 24px; }
+}

@@ -55,7 +55,7 @@ func Build(cfg *config.Config) (*Context, error) {
 	}
 
 	// ── Inference 层：按模型名解析 LLM 适配器（实例按名缓存）──
-	resolver := newLLMResolver(repo)
+	resolver := newLLMResolver(repo, cfg.AllowDynamicModels)
 	def, err := repo.Default()
 	if err != nil {
 		return nil, err
@@ -272,6 +272,7 @@ func Build(cfg *config.Config) (*Context, error) {
 		StopGrace:          time.Duration(cfg.Runs.StopGraceSeconds) * time.Second,
 		StopConfirmTimeout: time.Duration(cfg.Runs.StopConfirmSeconds) * time.Second,
 		Models:             repo,
+		AllowDynamicModels: cfg.AllowDynamicModels,
 	})
 	closeFunc := func() {
 		if closeMCP != nil {
@@ -314,7 +315,7 @@ func legacySeed(cfg *config.Config) []entity.LLMInfo {
 
 // newLLMResolver 按模型名解析 LLM 适配器：经 LLMInfoRepo 取配置，
 // 按 Provider 构造适配器并按名缓存（空名 = 缺省模型）。
-func newLLMResolver(repo port.LLMInfoRepo) port.LLMResolver {
+func newLLMResolver(repo port.LLMInfoRepo, allowDynamicModels bool) port.LLMResolver {
 	var mu sync.Mutex
 	cache := map[string]port.LLMPort{}
 	return func(name string) (port.LLMPort, error) {
@@ -324,6 +325,17 @@ func newLLMResolver(repo port.LLMInfoRepo) port.LLMResolver {
 			profile, err = repo.Default()
 		} else {
 			profile, err = repo.Get(name)
+		}
+		if err != nil && name != "" && allowDynamicModels {
+			// 控制层可能刚热加载了模型目录，而本沙箱的 models.yaml 还是启动时的快照。
+			// 所有模型都经控制层 /llm/v1 代理访问，回退到默认配置并把模型名换成请求名，
+			// 由控制层按名字解析真正的上游；这样新模型无需重启沙箱即可使用。
+			if fallback, fallbackErr := repo.Default(); fallbackErr == nil {
+				profile = fallback
+				profile.Name = name
+				profile.Model = name
+				err = nil
+			}
 		}
 		if err != nil {
 			return nil, err

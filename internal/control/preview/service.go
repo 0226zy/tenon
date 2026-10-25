@@ -56,6 +56,10 @@ func (s *Service) Entry(ctx context.Context, userID, convID string) (contract.Pr
 		return view, latestErr
 	}
 
+	if status == 0 || status == 5 {
+		// 尚未创建或已回收工作区：不要为了预览而拉起沙箱，等首轮 Run 再初始化。
+		return contract.PreviewView{Status: "none"}, nil
+	}
 	if status != 2 {
 		s.sb.EnsureAsync(convID)
 		view.Status = "starting"

@@ -3,6 +3,8 @@ import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
 
 export default defineConfig({
+  // 生产可构建到子路径（例如 TENON_BASE=/tenon/）；本地开发保持根路径。
+  base: process.env.TENON_BASE || '/',
   plugins: [vue()],
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },

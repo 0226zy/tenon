@@ -17,6 +17,21 @@ const env = {
   GOTOOLCHAIN: process.env.GOTOOLCHAIN || 'go1.25.0',
   GOPROXY: process.env.GOPROXY || 'https://goproxy.cn,direct',
 }
+// 本机可把 MySQL 连接信息放在未跟踪的 .local/mysql.env（KEY=VALUE）。
+// 显式指定 CONTROL_CONFIG（如 e2e）时不加载，保证测试仍用隔离的 SQLite。
+const mysqlEnvFile = path.join(root, '.local', 'mysql.env')
+if (!process.env.CONTROL_CONFIG && existsSync(mysqlEnvFile)) {
+  for (const line of readFileSync(mysqlEnvFile, 'utf8').split('\n')) {
+    const item = line.trim()
+    if (!item || item.startsWith('#')) continue
+    const at = item.indexOf('=')
+    if (at <= 0) continue
+    const key = item.slice(0, at).trim()
+    let value = item.slice(at + 1).trim()
+    if (/^(['"]).*\1$/.test(value)) value = value.slice(1, -1)
+    if (!(key in env)) env[key] = value
+  }
+}
 const builds = [
   ['bin/control', './cmd/control', root],
   ['bin/wsd', './cmd/wsd', root],

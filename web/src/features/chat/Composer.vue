@@ -5,7 +5,6 @@ import { useChatStore } from '@/stores/chat'
 import { useUiStore } from '@/stores/ui'
 import { ApiError } from '@/api/errors'
 import { isRunActive } from '@/types/contract'
-import ModelSelect from './ModelSelect.vue'
 
 const props = defineProps<{ cid: string }>()
 const chat = useChatStore()
@@ -84,7 +83,6 @@ defineExpose({ focus })
         @input="resize"
       />
       <div class="composer__toolbar">
-        <ModelSelect :cid="cid" :disabled="inputDisabled" />
         <span class="composer__count" :class="{ 'composer__count--over': charCount > 20000 }">{{ charCount.toLocaleString() }} / 20,000</span>
         <button
           class="composer__send"

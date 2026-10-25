@@ -86,12 +86,6 @@ export const useConversationsStore = defineStore('conversations', () => {
     if (details.value[cid]) details.value[cid] = { ...details.value[cid], ...updated }
   }
 
-  async function setModel(cid: string, model: string): Promise<void> {
-    const updated = await api.conv.update(cid, { model })
-    list.value = mergeConversation(list.value, updated)
-    if (details.value[cid]) details.value[cid] = { ...details.value[cid], ...updated }
-  }
-
   function updateRunLocal(cid: string, runId: string | undefined, status: RunStatus | undefined): void {
     const item = list.value.find((conversation) => conversation.id === cid)
     if (!item || !runId || !status) return
@@ -126,8 +120,20 @@ export const useConversationsStore = defineStore('conversations', () => {
 
   function select(cid: string): void { currentId.value = cid }
 
+  /** 退出登录或会话失效时清空缓存，避免下一个账号看到上一个账号的对话。 */
+  function reset(): void {
+    list.value = []
+    details.value = {}
+    currentId.value = ''
+    nextCursor.value = ''
+    loaded.value = false
+    loading.value = false
+    loadingMore.value = false
+    error.value = null
+  }
+
   return {
     list, details, currentId, nextCursor, loaded, loading, loadingMore, error, current,
-    load, loadMore, refreshStatus, create, rename, setModel, remove, getDetail, select, updateRunLocal,
+    load, loadMore, refreshStatus, create, rename, remove, getDetail, select, updateRunLocal, reset,
   }
 })

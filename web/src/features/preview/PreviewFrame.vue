@@ -25,7 +25,7 @@ const emit = defineEmits<{ restart: []; logs: [] }>()
       <span class="preview-empty__icon"><MonitorPlay :size="29" /></span>
       <strong>预览会出现在这里</strong>
       <p>第一轮任务完成后，平台会自动构建并启动应用。</p>
-      <span class="preview-empty__hint"><MousePointer2 :size="14" />先在对话中描述你的产品想法</span>
+      <span class="preview-empty__hint"><MousePointer2 :size="14" />先在左侧描述你的产品想法</span>
     </div>
     <div v-else-if="!state.displayedUrl && state.status === 'failed'" class="preview-empty preview-empty--error" role="alert">
       <AlertCircle :size="29" /><strong>预览构建失败</strong><p>{{ runErrorMessage(state.errorCode || 'BUILD_FAILED') }}</p>

@@ -55,23 +55,21 @@ describe('Composer', () => {
     expect((button.element as HTMLButtonElement).disabled).toBe(true)
   })
 
-  it('queued、running、cancelling、finalizing 均禁用输入和真实模型 select', async () => {
+  it('queued、running、cancelling、finalizing 均禁用输入，且不渲染模型选择', async () => {
     const chat = useChatStore()
     const view = chat.ensure('c1')
     view.runId = 'r1'
     const wrapper = mountComposer(pinia)
     const textarea = wrapper.get('textarea')
-    const select = wrapper.get('select[aria-label="执行模型"]')
     const button = wrapper.get('.composer__send')
+    expect(wrapper.find('select').exists()).toBe(false)
     expect((textarea.element as HTMLTextAreaElement).disabled).toBe(false)
-    expect((select.element as HTMLSelectElement).disabled).toBe(false)
 
     const labels = { queued: '取消', running: '取消', cancelling: '取消中…', finalizing: '收尾中…' } as const
     for (const status of ['queued', 'running', 'cancelling', 'finalizing'] as const) {
       view.runStatus = status
       await nextTick()
       expect((textarea.element as HTMLTextAreaElement).disabled).toBe(true)
-      expect((select.element as HTMLSelectElement).disabled).toBe(true)
       expect(button.text()).toContain(labels[status])
       expect((button.element as HTMLButtonElement).disabled).toBe(status === 'cancelling' || status === 'finalizing')
     }

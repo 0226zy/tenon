@@ -20,6 +20,7 @@ type RunOptions struct {
 	StopGrace          time.Duration
 	StopConfirmTimeout time.Duration
 	Models             port.LLMInfoRepo
+	AllowDynamicModels bool
 	Now                func() time.Time
 }
 
@@ -182,6 +183,13 @@ func (s *RunService) validateModel(name string) (string, error) {
 		profile, err = s.opts.Models.Get(name)
 	}
 	if err != nil {
+		// 控制层可能刚热加载了模型目录，而本沙箱的 models.yaml 仍是启动快照。
+		// 仅在代理模式下（allow_dynamic_models）沿用请求名，由控制层代理解析真正上游。
+		if s.opts.AllowDynamicModels {
+			if _, fallbackErr := s.opts.Models.Default(); fallbackErr == nil {
+				return name, nil
+			}
+		}
 		return "", fmt.Errorf("%w: %s", derr.ErrModelNotFound, name)
 	}
 	return profile.Name, nil

@@ -10,6 +10,7 @@ import type {
   ModelView,
   Page,
   PreviewView,
+  RegisterRequest,
   RunBrief,
   RunView,
   UIFrame,
@@ -28,6 +29,7 @@ function asPage<T>(value: Page<T> | T[]): Page<T> {
 export const api = {
   auth: {
     login: (username: string, password: string) => request<void>('POST', '/api/login', { username, password }),
+    register: (body: RegisterRequest) => request<UserView>('POST', '/api/register', body),
     logout: () => request<void>('POST', '/api/logout'),
     me: () => request<UserView>('GET', '/api/me'),
   },

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Code2, ExternalLink, Github, MonitorPlay, Rocket, X } from 'lucide-vue-next'
+import { Code2, ExternalLink, Github, MonitorPlay, PanelRightClose, Rocket, X } from 'lucide-vue-next'
 import { useUiStore } from '@/stores/ui'
 import { usePreviewStore } from '@/stores/preview'
 import CodePanel from '@/features/code/CodePanel.vue'
@@ -25,13 +25,14 @@ const previewState = computed(() => props.cid ? preview.ensure(props.cid) : unde
       <div class="workspace-panel__actions">
         <span class="disabled-action" title="即将开放"><button type="button" disabled><Github :size="14" />推送</button></span>
         <span class="disabled-action" title="即将开放"><button type="button" disabled><Rocket :size="14" />发布</button></span>
+        <button class="icon-button workspace-panel__collapse" type="button" aria-label="收起工作区" title="收起" @click="ui.toggleWorkspace()"><PanelRightClose :size="17" /></button>
         <button class="icon-button workspace-panel__close" type="button" aria-label="关闭工作区" @click="ui.mobileWorkspaceOpen = false"><X :size="17" /></button>
       </div>
     </header>
     <div v-if="!cid" class="workspace-placeholder">
       <span><Code2 :size="26" /><MonitorPlay :size="26" /></span>
       <strong>代码与预览</strong>
-      <p>选择或新建对话后，在这里查看真实代码，并试用生成的应用。</p>
+      <p>选择或新建项目后，在这里查看真实代码，并试用生成的应用。</p>
       <span class="workspace-placeholder__hint"><ExternalLink :size="13" />支持独立窗口预览</span>
     </div>
     <template v-else>

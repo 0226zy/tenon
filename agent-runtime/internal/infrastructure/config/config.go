@@ -21,6 +21,9 @@ type Config struct {
 	MCP      MCPConfig      `yaml:"mcp"`      // MCP 工具生态（空 = 不启用）
 	Deploy   DeployConfig   `yaml:"deploy"`   // 部署目标（空 = 不注册 deploy 工具）
 	Security SecurityConfig `yaml:"security"` // 部署安全边界（工作区白名单等）
+	// AllowDynamicModels=true 时接受不在 models 文件里的模型名并交给代理层解析。
+	// 仅当所有模型都经控制层 /llm/v1 代理访问时启用（wsd 生成的配置会打开）。
+	AllowDynamicModels bool `yaml:"allow_dynamic_models"`
 	// ModelsFile 是 LLM 模型信息资源（LLMInfoRepo）的本地文件路径；
 	// 后续切换 DB 仓储时本字段由 db 配置替代，上层不变。
 	ModelsFile string `yaml:"models_file"`

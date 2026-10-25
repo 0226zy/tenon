@@ -46,7 +46,7 @@ export function relativeTime(value: string, now = Date.now()): string {
 }
 
 export function conversationTitle(conversation?: Pick<ConversationView, 'title'>): string {
-  return conversation?.title.trim() || '未命名对话'
+  return conversation?.title.trim() || '未命名项目'
 }
 
 export function fileLanguage(path: string): string {

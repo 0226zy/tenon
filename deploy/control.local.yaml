@@ -1,3 +1,6 @@
+# 库表存储默认跟随 mode（local→sqlite）。切换 MySQL 只需设置环境变量：
+#   CONTROL_DB_DRIVER=mysql 以及 CONTROL_MYSQL_USER/CONTROL_MYSQL_PASSWORD 等（见 README）。
+# 应用账号只需 SELECT/INSERT/UPDATE，建表与迁移用管理员账号执行一次。
 mode: local
 listen:
   api: 127.0.0.1:8080

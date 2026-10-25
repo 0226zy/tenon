@@ -103,13 +103,19 @@ try {
 
   await page.goto(baseURL, { waitUntil: 'domcontentloaded' })
   assert.equal(await page.title(), 'Tenon · 原型工坊')
-  await page.locator('.login-brand').getByText('Tenon', { exact: true }).waitFor()
+  // 首次访问是游客首页：不跳登录页，浏览首页不发受保护请求。
+  await page.getByRole('heading', { name: '今天想构建什么？' }).waitFor()
+  assert.equal(new URL(page.url()).pathname, '/', '首次访问被重定向到登录页')
+  await page.locator('.sidebar-brand__text').waitFor()
+  assert.match((await page.locator('.sidebar-brand__text').textContent()) || '', /Tenon/)
+  await page.locator('.sidebar-user').getByRole('button', { name: '登录或注册' }).click()
+  const authDialog = page.getByRole('dialog', { name: '登录或注册' })
+  await authDialog.waitFor()
   await page.locator('#username').fill('demo')
   await page.locator('#password').fill(password)
   await page.getByRole('button', { name: '登录', exact: true }).click()
+  await authDialog.waitFor({ state: 'detached' })
   await page.getByRole('heading', { name: '今天想构建什么？' }).waitFor()
-  await page.locator('.sidebar-brand__text').waitFor()
-  assert.match((await page.locator('.sidebar-brand__text').textContent()) || '', /Tenon/)
 
   await page.getByRole('button', { name: /从空白对话开始/ }).click()
   await page.waitForURL(/\/c\/[a-z2-7]{12}$/)
@@ -164,9 +170,14 @@ try {
   await page.waitForFunction(() => (document.querySelector('.log-drawer__content')?.textContent || '').trim().length > 0)
   await page.getByRole('button', { name: '关闭日志', exact: true }).click()
 
+  const historyResponse = page.waitForResponse((response) => {
+    const url = new URL(response.url())
+    return url.pathname === `/api/conversations/${conversationID}/messages` && response.request().method() === 'GET'
+  })
   await page.reload({ waitUntil: 'domcontentloaded' })
+  await historyResponse
   await page.locator('.run-end-card--finished').waitFor({ timeout: 60_000 })
-  await page.getByText(message, { exact: true }).waitFor()
+  await page.getByText(message, { exact: true }).waitFor({ timeout: 60_000 })
   await assertSuccessfulTools(1)
   assert.equal(await page.locator('.user-message').count(), 1, '刷新后用户消息重复')
   await screenshot('04-history-recovered')
@@ -227,15 +238,15 @@ try {
   const renamedTitle = `Chrome 全链路验收 ${conversationID}`
   const activeConversation = page.locator('.conv-item--active')
   await activeConversation.hover()
-  await activeConversation.getByRole('button', { name: '重命名对话', exact: true }).click()
-  await activeConversation.getByRole('textbox', { name: '对话标题' }).fill(renamedTitle)
+  await activeConversation.getByRole('button', { name: '重命名项目', exact: true }).click()
+  await activeConversation.getByRole('textbox', { name: '项目标题' }).fill(renamedTitle)
   await activeConversation.getByRole('button', { name: '保存标题', exact: true }).click()
   await activeConversation.locator('.conv-item__title').getByText(renamedTitle, { exact: true }).waitFor()
   assert.equal((await apiGet(`/api/conversations/${conversationID}`)).title, renamedTitle, '重命名未持久化')
 
   // Use a separate conversation for cancellation so expected cancelled tool
   // results cannot weaken the main conversation's all-tools-success assertion.
-  await page.getByRole('button', { name: '新建对话', exact: true }).click()
+  await page.getByRole('button', { name: '新建项目', exact: true }).click()
   await page.waitForURL((url) => /\/c\/[a-z2-7]{12}$/.test(url.pathname) && !url.pathname.endsWith(conversationID))
   const cancelConversationID = page.url().split('/').at(-1)
   const cancelMessage = `取消与重新执行验收 ${new Date().toISOString()}`
@@ -253,7 +264,7 @@ try {
   const cancelConversation = page.locator('.conv-item--active')
   await cancelConversation.hover()
   await cancelConversation.getByRole('button', { name: '删除对话', exact: true }).click()
-  await page.getByRole('dialog', { name: '删除这个对话？' }).getByRole('button', { name: '删除对话', exact: true }).click()
+  await page.getByRole('dialog', { name: '删除这个项目？' }).getByRole('button', { name: '删除项目', exact: true }).click()
   await page.getByRole('heading', { name: '今天想构建什么？' }).waitFor({ timeout: 60_000 })
   const deleted = await apiFetch(`/api/conversations/${cancelConversationID}`)
   await deleted.arrayBuffer()
@@ -266,10 +277,15 @@ try {
 
   await page.getByRole('button', { name: '用户菜单', exact: true }).click()
   await page.getByRole('button', { name: '退出登录', exact: true }).click()
-  await page.locator('#username').waitFor()
+  // 退出登录回到游客首页，再通过侧栏入口登录。
+  await page.getByRole('heading', { name: '今天想构建什么？' }).waitFor()
+  await page.locator('.sidebar-user').getByRole('button', { name: '登录或注册' }).click()
+  const reloginDialog = page.getByRole('dialog', { name: '登录或注册' })
+  await reloginDialog.waitFor()
   await page.locator('#username').fill('demo')
   await page.locator('#password').fill(password)
   await page.getByRole('button', { name: '登录', exact: true }).click()
+  await reloginDialog.waitFor({ state: 'detached' })
   await page.getByRole('heading', { name: '今天想构建什么？' }).waitFor()
   await page.locator('.conv-item__title').getByText(renamedTitle, { exact: true }).click()
   await page.waitForURL(new RegExp(`/c/${conversationID}$`))
@@ -339,6 +355,16 @@ try {
       console.error('编辑器诊断：', await page.evaluate(() => ({
         text: document.querySelector('.editor-pane__body')?.textContent?.slice(0, 500),
         monaco: document.querySelector('.monaco-container')?.outerHTML.slice(0, 1000),
+      })))
+      console.error('消息诊断：', await page.evaluate(() => ({
+        userMessages: [...document.querySelectorAll('.user-message')].map((item) => item.textContent),
+        bubbles: [...document.querySelectorAll('.user-message__bubble')].map((item) => ({
+          text: item.textContent,
+          codes: [...(item.textContent || '')].map((ch) => ch.codePointAt(0)),
+          rect: item.getBoundingClientRect().toJSON(),
+        })),
+        cards: document.querySelectorAll('.run-end-card').length,
+        pageError: document.querySelector('.page-error')?.textContent,
       })))
     } catch { /* 页面可能已关闭 */ }
   }

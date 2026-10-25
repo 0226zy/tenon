@@ -14,6 +14,7 @@ export type PreviewStatus = 'none' | 'starting' | 'ready' | 'failed'
 export type FileChangeKind = 'A' | 'M' | 'D'
 
 export interface LoginRequest { username: string; password: string }
+export interface RegisterRequest { username: string; password: string; name?: string }
 export interface UserView { user_id: string; name: string }
 export interface ModelView {
   id: string
@@ -21,6 +22,9 @@ export interface ModelView {
   tags: string[]
   desc: string
   default: boolean
+  /** false 表示模型存在但运行所需凭证（missing_env）当前不可用。 */
+  ready: boolean
+  missing_env?: string
 }
 export interface RunBrief { run_id: string; status: RunStatus }
 export interface PreviewBrief {

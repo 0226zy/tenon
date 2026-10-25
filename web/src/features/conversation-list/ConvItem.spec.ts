@@ -26,7 +26,7 @@ describe('ConvItem', () => {
       props: { conversation: conversation(), active: false },
       global: { plugins: [pinia] },
     })
-    expect(wrapper.get('.conv-item__title').text()).toBe('未命名对话')
+    expect(wrapper.get('.conv-item__title').text()).toBe('未命名项目')
     expect(wrapper.get('.status-badge').text()).toBe('排队中')
 
     await wrapper.setProps({

@@ -32,7 +32,6 @@ export const useChatStore = defineStore('chat', () => {
   const messageCursorByConv = ref<Record<string, string>>({})
   const hasMoreMessagesByConv = ref<Record<string, boolean>>({})
   const drafts = ref<Record<string, string>>({})
-  const modelByConv = ref<Record<string, string>>({})
   let eventsBound = false
   let unbindFrame: (() => void) | undefined
   let unbindState: (() => void) | undefined
@@ -146,7 +145,6 @@ export const useChatStore = defineStore('chat', () => {
     advanceCursor = true,
   ): void {
     const view = ensure(cid)
-    modelByConv.value[cid] = detail.model
     if (advanceCursor) view.lastSeq = Math.max(view.lastSeq, detail.last_seq)
     if (detail.active_run) {
       view.runId = detail.active_run.run_id
@@ -286,7 +284,6 @@ export const useChatStore = defineStore('chat', () => {
       const result = await api.run.send(cid, {
         client_request_id: message.clientRequestId,
         content: message.content,
-        model: modelByConv.value[cid] || undefined,
       })
       message.status = 'accepted'
       message.serverId = result.message_id
@@ -362,7 +359,6 @@ export const useChatStore = defineStore('chat', () => {
     view.runStatus = result.status
   }
 
-  function setModel(cid: string, model: string): void { modelByConv.value[cid] = model }
   function setDraft(cid: string, value: string): void { drafts.value[cid] = value }
   function users(cid: string): UserMessageState[] {
     return (userOrderByConv.value[cid] || []).map((id) => usersByConv.value[cid][id]).filter(Boolean)
@@ -382,14 +378,13 @@ export const useChatStore = defineStore('chat', () => {
     delete usersByConv.value[cid]
     delete userOrderByConv.value[cid]
     delete drafts.value[cid]
-    delete modelByConv.value[cid]
     delete messageCursorByConv.value[cid]
     delete hasMoreMessagesByConv.value[cid]
   }
 
   return {
-    byConv, usersByConv, userOrderByConv, drafts, modelByConv,
+    byConv, usersByConv, userOrderByConv, drafts,
     ensure, enter, attach, detach, recover, loadOlder, send, retryMessage, retryRun,
-    cancel, setModel, setDraft, users, hasMore, setRunStatus, isLatestTerminal, ingestMessages, dispose,
+    cancel, setDraft, users, hasMore, setRunStatus, isLatestTerminal, ingestMessages, dispose,
   }
 })

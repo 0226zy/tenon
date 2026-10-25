@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/go-sql-driver/mysql"
 )
 
 func TestLoadLocalResolvesPathsAndEnvironment(t *testing.T) {
@@ -77,5 +79,82 @@ func TestLoadRejectsUnknownFieldsAndMissingProductionSecretDSN(t *testing.T) {
 	}
 	if _, err := Load(mysql); err == nil || !strings.Contains(err.Error(), "mysql.dsn") {
 		t.Fatalf("missing DSN error=%v", err)
+	}
+}
+
+func writeLocalConfig(t *testing.T) string {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), "control.yaml")
+	raw := `mode: local
+sqlite:
+  path: data/control.db
+control:
+  secret_file: secret.key
+catalog:
+  file: models.yaml
+preview:
+  domain: preview.local
+local:
+  root: sandboxes
+  wsd_bin: bin/wsd
+  template_dir: template
+  agent_runtime_bin: bin/agent-runtime
+`
+	if err := os.WriteFile(path, []byte(raw), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	return path
+}
+
+func TestMySQLCredentialsComeFromEnvironment(t *testing.T) {
+	path := writeLocalConfig(t)
+	t.Setenv("CONTROL_DB_DRIVER", "mysql")
+	t.Setenv("CONTROL_MYSQL_HOST", "db.internal")
+	t.Setenv("CONTROL_MYSQL_PORT", "3307")
+	t.Setenv("CONTROL_MYSQL_DATABASE", "tenon_test")
+	t.Setenv("CONTROL_MYSQL_USER", "tenon_app")
+	t.Setenv("CONTROL_MYSQL_PASSWORD", "p@ss/word:1")
+
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Dialect() != "mysql" {
+		t.Fatalf("dialect=%q want mysql", cfg.Dialect())
+	}
+	parsed, err := mysql.ParseDSN(cfg.MySQL.DSN)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if parsed.User != "tenon_app" || parsed.Passwd != "p@ss/word:1" {
+		t.Fatalf("credentials not applied: %+v", parsed)
+	}
+	if parsed.Addr != "db.internal:3307" || parsed.DBName != "tenon_test" || !parsed.ParseTime {
+		t.Fatalf("dsn=%+v", parsed)
+	}
+}
+
+func TestDatabaseDriverDefaultsByMode(t *testing.T) {
+	local := writeLocalConfig(t)
+	cfg, err := Load(local)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Dialect() != "sqlite" {
+		t.Fatalf("local default dialect=%q want sqlite", cfg.Dialect())
+	}
+}
+
+func TestDatabaseDriverOverride(t *testing.T) {
+	path := writeLocalConfig(t)
+	t.Setenv("CONTROL_DB_DRIVER", "mysql")
+	t.Setenv("CONTROL_MYSQL_USER", "tenon_app")
+	t.Setenv("CONTROL_MYSQL_PASSWORD", "secret")
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Dialect() != "mysql" {
+		t.Fatalf("dialect=%q want mysql", cfg.Dialect())
 	}
 }

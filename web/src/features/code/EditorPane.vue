@@ -42,7 +42,7 @@ onMounted(async () => {
   })
   editor = monaco.editor.create(container.value, {
     readOnly: true,
-    readOnlyMessage: { value: '代码为只读模式，修改请通过对话完成' },
+    readOnlyMessage: { value: '代码为只读模式，修改请通过左侧需求描述完成' },
     domReadOnly: true,
     automaticLayout: true,
     minimap: { enabled: false },

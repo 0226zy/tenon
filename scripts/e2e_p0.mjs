@@ -262,7 +262,7 @@ export async function runExtendedP0({
     assert.equal(postCount, 1, '慢响应 POST 次数不正确')
 
     await page.waitForFunction(() => document.querySelector('textarea[aria-label="需求内容"]')?.disabled)
-    assert.equal(await page.locator('select[aria-label="执行模型"]').isDisabled(), true, '活跃 Run 期间模型选择未禁用')
+    assert.equal(await page.locator('select[aria-label="执行模型"]').count(), 0, '前端不应渲染模型选择')
     const conflict = await errorPayload(await raw('PATCH', `/api/conversations/${conversationID}`, { model: SECONDARY_MODEL }), 409, '活跃 Run 切换模型')
     assert.equal(conflict.error?.code, 'RUN_IN_PROGRESS', '活跃 Run 切换模型错误码不正确')
 
@@ -284,21 +284,16 @@ export async function runExtendedP0({
     await waitPreviewGeneration(3, slowMessage)
     await page.locator('.preview-stale').waitFor({ state: 'hidden' })
 
-    const patchPromise = page.waitForResponse((response) => {
-      const url = new URL(response.url())
-      return url.pathname === `/api/conversations/${conversationID}` && response.request().method() === 'PATCH'
-    })
-    await page.locator('select[aria-label="执行模型"]').selectOption(SECONDARY_MODEL)
-    const patchResponse = await patchPromise
-    const patched = await patchResponse.json()
-    assert.equal(patchResponse.status(), 200, '终态后切换模型失败')
+    // 前端不再提供模型选择；模型切换只保留服务端 API 能力（用于管理与计量验证）。
+    const patched = await json('PATCH', `/api/conversations/${conversationID}`, { model: SECONDARY_MODEL }, 200)
     assert.equal(patched.model, SECONDARY_MODEL, 'PATCH 未返回第二模型')
     assert.equal((await apiGet(`/api/conversations/${conversationID}`)).model, SECONDARY_MODEL, '第二模型未持久化')
-    assert.equal(await page.locator('select[aria-label="执行模型"]').inputValue(), SECONDARY_MODEL)
     coverage.active_run = {
       optimistic_sending: true,
-      composer_and_model_disabled: true,
+      composer_disabled: true,
+      no_model_picker_in_ui: true,
       model_patch_conflict: 'RUN_IN_PROGRESS',
+      model_switch_api_only: true,
       stale_preview_preserved: secondGeneration,
       recovered_generation: 3,
     }
@@ -320,7 +315,7 @@ export async function runExtendedP0({
     await page.getByRole('textbox', { name: '需求内容' }).fill('[e2e:markdown]')
     await page.getByRole('button', { name: '发送', exact: true }).click()
     const post = await requestPromise
-    assert.equal(post.postDataJSON().model, SECONDARY_MODEL, '发送请求未携带第二模型')
+    assert.equal(post.postDataJSON().model, undefined, '前端不应在发送请求里指定模型')
     const accepted = await acceptedPromise
     assert.equal(accepted.status(), 202, 'Markdown 消息未被接受')
     await accepted.body()
@@ -591,7 +586,7 @@ export async function runExtendedP0({
   async function logoutViaUI() {
     await page.getByRole('button', { name: '用户菜单', exact: true }).click()
     await page.getByRole('button', { name: '退出登录', exact: true }).click()
-    await page.locator('#username').waitFor()
+    await page.getByRole('heading', { name: '今天想构建什么？' }).waitFor()
   }
 
   async function verifySessionRedirects() {
@@ -790,6 +785,74 @@ export async function runExtendedP0({
     }
   }
 
+  // 游客可直接浏览首页；只有创建对话时才弹出登录/注册，注册后继续创建。
+  async function verifyGuestBrowseAndRegistration() {
+    await logoutViaUI()
+    const guestLogin = page.locator('.sidebar-user').getByRole('button', { name: '登录或注册' })
+    await guestLogin.waitFor()
+    assert.equal(new URL(page.url()).pathname, '/', '退出登录后没有回到游客首页')
+
+    const protectedPaths = []
+    const recordRequest = (request) => {
+      const pathname = new URL(request.url()).pathname
+      if (pathname === '/api/conversations' || pathname === '/api/models') protectedPaths.push(pathname)
+    }
+    page.on('request', recordRequest)
+    await page.reload({ waitUntil: 'domcontentloaded' })
+    await page.getByRole('heading', { name: '今天想构建什么？' }).waitFor()
+    await sleep(800)
+    page.off('request', recordRequest)
+    assert.deepEqual(protectedPaths, [], `游客首页请求了受保护接口：${protectedPaths.join('、')}`)
+    assert.equal(new URL(page.url()).pathname, '/', '游客刷新首页被重定向到登录页')
+
+    await page.getByRole('button', { name: /从空白对话开始/ }).click()
+    const dialog = page.getByRole('dialog', { name: '登录或注册' })
+    await dialog.waitFor()
+    await dialog.getByRole('tab', { name: '注册' }).click()
+    const guestUser = `e2e_${Date.now().toString(36)}`
+    const guestPassword = 'password-guest-1'
+    await page.locator('#username').fill(guestUser)
+    await page.locator('#password').fill(guestPassword)
+    await page.locator('#confirm-password').fill(guestPassword)
+    const registerPromise = page.waitForResponse((response) => {
+      const url = new URL(response.url())
+      return url.pathname === '/api/register' && response.request().method() === 'POST'
+    })
+    await dialog.getByRole('button', { name: '注册并登录' }).click()
+    assert.equal((await registerPromise).status(), 201, '自助注册未返回 201')
+    await dialog.waitFor({ state: 'detached' })
+    await page.waitForURL(/\/c\/[a-z2-7]{12}$/)
+    const guestConversation = page.url().split('/').at(-1)
+    const guestMe = await apiGet('/api/me')
+    assert.equal(guestMe.user_id, guestUser, '注册后会话未切换到新账号')
+    assert.equal((await apiGet(`/api/conversations/${guestConversation}`)).id, guestConversation, '注册后未继续创建对话')
+    await capture('21-guest-register')
+    await json('DELETE', `/api/conversations/${guestConversation}`, undefined, 204)
+
+    // 收尾：退出新账号并用 demo 重新登录，保持后续断言使用的登录态。
+    await page.goto(baseURL, { waitUntil: 'domcontentloaded' })
+    await page.getByRole('button', { name: '用户菜单', exact: true }).click()
+    await page.getByRole('button', { name: '退出登录', exact: true }).click()
+    await page.getByRole('heading', { name: '今天想构建什么？' }).waitFor()
+    await page.locator('.sidebar-user').getByRole('button', { name: '登录或注册' }).click()
+    const loginDialog = page.getByRole('dialog', { name: '登录或注册' })
+    await loginDialog.waitFor()
+    await page.locator('#username').fill('demo')
+    await page.locator('#password').fill(password)
+    await page.getByRole('button', { name: '登录', exact: true }).click()
+    await loginDialog.waitFor({ state: 'detached' })
+    await page.getByRole('button', { name: '用户菜单', exact: true }).waitFor()
+    assert.match((await page.locator('.sidebar-user__text').textContent()) || '', /demo/, '收尾未恢复到 demo 登录态')
+
+    coverage.guest_browse = {
+      first_visit_stays_on_home: true,
+      no_protected_requests_while_guest: true,
+      create_prompts_auth_dialog: true,
+      register_returns_201_and_continues_create: true,
+      reload_after_logout_keeps_guest_home: true,
+    }
+  }
+
   await verifyAuthentication()
   await verifyPagination()
   await verifySlowRunAndModel()
@@ -799,6 +862,7 @@ export async function runExtendedP0({
   await verifySessionRedirects()
   await verifyThirdPartyCookies()
   await verifySleepAndWake()
+  await verifyGuestBrowseAndRegistration()
 
   return { coverage, screenshots, notCovered }
 }

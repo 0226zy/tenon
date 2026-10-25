@@ -4,11 +4,13 @@ package config
 import (
 	"bytes"
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/go-sql-driver/mysql"
 	"gopkg.in/yaml.v3"
 )
 
@@ -37,6 +39,7 @@ func (d Duration) MarshalYAML() (any, error) { return d.String(), nil }
 
 type Config struct {
 	Mode        string      `yaml:"mode"`
+	Database    Database    `yaml:"database"`
 	Listen      Listen      `yaml:"listen"`
 	Web         Web         `yaml:"web"`
 	Control     Control     `yaml:"control"`
@@ -54,6 +57,26 @@ type Config struct {
 	Files       Files       `yaml:"files"`
 	AgentClient AgentClient `yaml:"agentclient"`
 	User        User        `yaml:"user"`
+}
+
+// Database 显式选择控制层库表存储；留空时按 mode 推导（local→sqlite，其余→mysql）。
+// 这样 local 模式只表达“本机沙箱 + 演示模型”，不再与 SQLite 强绑定。
+type Database struct {
+	Driver string `yaml:"driver"`
+}
+
+// Dialect 返回实际使用的数据库方言。
+func (c *Config) Dialect() string {
+	switch c.Database.Driver {
+	case "mysql":
+		return "mysql"
+	case "sqlite":
+		return "sqlite"
+	}
+	if c.Mode == "local" {
+		return "sqlite"
+	}
+	return "mysql"
 }
 
 type Listen struct {
@@ -82,6 +105,8 @@ type Auth struct {
 	CookieSecure   bool     `yaml:"cookie_secure"`
 	LoginFailLimit int      `yaml:"login_fail_limit"`
 	LoginLock      Duration `yaml:"login_lock"`
+	RegisterLimit  int      `yaml:"register_limit"`
+	RegisterWindow Duration `yaml:"register_window"`
 	Argon2         Argon2   `yaml:"argon2"`
 }
 type Argon2 struct {
@@ -189,7 +214,7 @@ func Default() *Config {
 	c.Web.Origin = "http://127.0.0.1:8080"
 	c.Control.SecretFile = "/etc/proto/secret.key"
 	c.MySQL = MySQL{MaxOpen: 50, MaxIdle: 10}
-	c.Auth = Auth{SessionTTL: Duration{7 * 24 * time.Hour}, CookieName: "proto_sid", CookieSecure: true, LoginFailLimit: 5, LoginLock: Duration{15 * time.Minute}, Argon2: Argon2{Time: 2, Memory: 64 * 1024, Threads: 2}}
+	c.Auth = Auth{SessionTTL: Duration{7 * 24 * time.Hour}, CookieName: "proto_sid", CookieSecure: true, LoginFailLimit: 5, LoginLock: Duration{15 * time.Minute}, RegisterLimit: 10, RegisterWindow: Duration{time.Hour}, Argon2: Argon2{Time: 2, Memory: 64 * 1024, Threads: 2}}
 	c.Run = Run{MaxDuration: Duration{30 * time.Minute}, StopConfirmTimeout: Duration{30 * time.Second}, ReconcileInterval: Duration{5 * time.Second}, ContentMaxChars: 20000, PrepareRetry: 3}
 	c.Quota = Quota{Run: Limit{8, 2}, Sandbox: Limit{10, 3}, Build: Limit{2, 1}, Queue: Queue{5, Duration{10 * time.Minute}}}
 	c.Sandbox = Sandbox{Image: "tenon-sandbox:v3", Network: "tenon-sbx", Driver: "docker", CPUs: 1, Memory: "2g", Pids: 512, DiskLimit: 10 << 30, IdleStopAfter: Duration{30 * time.Minute}, MaxLifetime: Duration{24 * time.Hour}, StartTimeout: Duration{60 * time.Second}, HealthInterval: Duration{10 * time.Second}, HealthFailThreshold: 3, VolumeRetentionAfterDelete: Duration{7 * 24 * time.Hour}, InternalURL: "http://127.0.0.1:8082", Agent: AgentLimits{80, 800000, 96000}}
@@ -230,8 +255,15 @@ func Load(path string) (*Config, error) {
 	resolve(&c.Local.WSDBin)
 	resolve(&c.Local.TemplateDir)
 	resolve(&c.Local.AgentRuntimeBin)
+	if v := os.Getenv("CONTROL_DB_DRIVER"); v != "" {
+		c.Database.Driver = v
+	}
 	if v := os.Getenv("CONTROL_MYSQL_DSN"); v != "" {
 		c.MySQL.DSN = v
+	}
+	// 账号密码只从环境变量读取；DSN 用驱动自带的 Config 组装，避免手写转义。
+	if user := os.Getenv("CONTROL_MYSQL_USER"); user != "" {
+		c.MySQL.DSN = mysqlDSN(user, os.Getenv("CONTROL_MYSQL_PASSWORD"))
 	}
 	if v := os.Getenv("CONTROL_MYSQL_PASSWORD"); v != "" {
 		if strings.Contains(c.MySQL.DSN, "${CONTROL_MYSQL_PASSWORD}") {
@@ -241,19 +273,56 @@ func Load(path string) (*Config, error) {
 	if c.Mode != "local" && c.Mode != "mysql" {
 		return nil, fmt.Errorf("mode must be local or mysql")
 	}
+	if c.Database.Driver != "" && c.Database.Driver != "mysql" && c.Database.Driver != "sqlite" {
+		return nil, fmt.Errorf("database.driver must be mysql or sqlite")
+	}
 	if c.Mode == "local" {
 		c.Sandbox.Driver = "local"
-		if c.SQLite.Path == "" {
-			return nil, fmt.Errorf("sqlite.path is required in local mode")
-		}
 		if c.Local.Root == "" || c.Local.WSDBin == "" {
 			return nil, fmt.Errorf("local.root and local.wsd_bin are required")
 		}
-	} else if c.MySQL.DSN == "" {
-		return nil, fmt.Errorf("mysql.dsn is required")
+	}
+	switch c.Dialect() {
+	case "sqlite":
+		if c.SQLite.Path == "" {
+			return nil, fmt.Errorf("sqlite.path is required when database driver is sqlite")
+		}
+	case "mysql":
+		if c.MySQL.DSN == "" {
+			return nil, fmt.Errorf("mysql.dsn is required, or set CONTROL_MYSQL_USER/CONTROL_MYSQL_PASSWORD (optionally CONTROL_MYSQL_HOST/PORT/DATABASE)")
+		}
 	}
 	if c.Preview.Domain == "" || c.Control.SecretFile == "" || c.Catalog.File == "" {
 		return nil, fmt.Errorf("preview.domain, control.secret_file and catalog.file are required")
 	}
 	return c, nil
+}
+
+// mysqlDSN 从环境变量组装 DSN：账号/密码必须显式提供，主机、端口、库名有默认值。
+func mysqlDSN(user, password string) string {
+	host := os.Getenv("CONTROL_MYSQL_HOST")
+	if host == "" {
+		host = "127.0.0.1"
+	}
+	port := os.Getenv("CONTROL_MYSQL_PORT")
+	if port == "" {
+		port = "3306"
+	}
+	database := os.Getenv("CONTROL_MYSQL_DATABASE")
+	if database == "" {
+		database = "tenon"
+	}
+	cfg := mysql.NewConfig()
+	cfg.User = user
+	cfg.Passwd = password
+	cfg.Net = "tcp"
+	cfg.Addr = net.JoinHostPort(host, port)
+	cfg.DBName = database
+	cfg.ParseTime = true
+	cfg.Loc = time.UTC
+	cfg.Timeout = 5 * time.Second
+	cfg.ReadTimeout = 30 * time.Second
+	cfg.WriteTimeout = 30 * time.Second
+	cfg.Params = map[string]string{"charset": "utf8mb4"}
+	return cfg.FormatDSN()
 }

@@ -33,6 +33,10 @@ func (testCatalog) Validate(model string) error {
 	return nil
 }
 
+func (testCatalog) CheckReady(model string) error {
+	return testCatalog{}.Validate(model)
+}
+
 type fakeSandbox struct {
 	handle    sandbox.Handle
 	forceStop atomic.Int32

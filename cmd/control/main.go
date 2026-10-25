@@ -204,9 +204,9 @@ func openStore(path string) (*config.Config, *store.Store, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	dialect, dsn := "mysql", cfg.MySQL.DSN
-	if cfg.Mode == "local" {
-		dialect, dsn = "sqlite", cfg.SQLite.Path
+	dialect, dsn := cfg.Dialect(), cfg.SQLite.Path
+	if dialect == "mysql" {
+		dsn = cfg.MySQL.DSN
 	}
 	st, err := store.Open(context.Background(), dialect, dsn)
 	if err != nil {

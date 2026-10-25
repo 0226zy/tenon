@@ -78,10 +78,11 @@ func writeAgentRuntimeConfig(dir string, cfg contract.SandboxConfig, agentRuntim
 		"server": map[string]any{
 			"listen": listenAddress, "disable_webui": true, "disable_model_api": true,
 		},
-		"security":    map[string]any{"allowed_cwd_roots": []string{filepath.Join(workspace, "app")}},
-		"models_file": filepath.Join(dir, "models.yaml"),
-		"skills_dir":  skillsDir,
-		"storage":     map[string]any{"data_dir": filepath.Join(dir, "data")},
+		"security":             map[string]any{"allowed_cwd_roots": []string{filepath.Join(workspace, "app")}},
+		"models_file":          filepath.Join(dir, "models.yaml"),
+		"allow_dynamic_models": true,
+		"skills_dir":           skillsDir,
+		"storage":              map[string]any{"data_dir": filepath.Join(dir, "data")},
 		"agent": map[string]any{
 			"max_iterations":             agent.MaxIterations,
 			"token_budget_per_turn":      agent.TokenBudgetPerTurn,

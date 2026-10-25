@@ -28,7 +28,7 @@ async function openFile(path: string): Promise<void> {
 </script>
 
 <template>
-  <section class="chat-panel" aria-label="对话工作区">
+  <section class="chat-panel" aria-label="项目工作区">
     <StatusBar :status="view.runStatus" :progress="view.progress" :connection="view.connection" />
     <MessageList :cid="cid" @example="useExample" @open-file="openFile" />
     <Composer ref="composer" :cid="cid" />

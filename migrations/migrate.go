@@ -5,9 +5,12 @@ import (
 	"context"
 	"database/sql"
 	"embed"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
+
+	"github.com/go-sql-driver/mysql"
 )
 
 //go:embed *.sql
@@ -17,14 +20,8 @@ func Migrate(ctx context.Context, db *sql.DB, dialect string) error {
 	if dialect != "mysql" && dialect != "sqlite" {
 		return fmt.Errorf("unsupported migration dialect %q", dialect)
 	}
-	var ddl string
-	if dialect == "mysql" {
-		ddl = "CREATE TABLE IF NOT EXISTS t_schema_migration (version VARCHAR(255) NOT NULL PRIMARY KEY, applied_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
-	} else {
-		ddl = "CREATE TABLE IF NOT EXISTS t_schema_migration (version TEXT NOT NULL PRIMARY KEY, applied_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP)"
-	}
-	if _, err := db.ExecContext(ctx, ddl); err != nil {
-		return fmt.Errorf("create migration table: %w", err)
+	if err := ensureMigrationTable(ctx, db, dialect); err != nil {
+		return err
 	}
 	entries, err := files.ReadDir(".")
 	if err != nil {
@@ -52,13 +49,41 @@ func Migrate(ctx context.Context, db *sql.DB, dialect string) error {
 			return err
 		}
 		if err := apply(ctx, db, dialect, string(raw)); err != nil {
-			return fmt.Errorf("migration %s: %w", name, err)
+			return fmt.Errorf("migration %s（DDL 需要管理员账号先执行，应用账号只有 SELECT/INSERT/UPDATE）: %w", name, err)
 		}
 		if _, err := db.ExecContext(ctx, "INSERT INTO t_schema_migration(version) VALUES(?)", name); err != nil {
 			return fmt.Errorf("record migration %s: %w", name, err)
 		}
 	}
 	return nil
+}
+
+// ensureMigrationTable 先探测表是否存在，避免对只有 DML 权限的账号执行 CREATE TABLE。
+func ensureMigrationTable(ctx context.Context, db *sql.DB, dialect string) error {
+	var n int
+	err := db.QueryRowContext(ctx, "SELECT COUNT(*) FROM t_schema_migration").Scan(&n)
+	if err == nil {
+		return nil
+	}
+	if !isMissingTable(err) {
+		return fmt.Errorf("inspect migration table: %w", err)
+	}
+	ddl := "CREATE TABLE IF NOT EXISTS t_schema_migration (version TEXT NOT NULL PRIMARY KEY, applied_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP)"
+	if dialect == "mysql" {
+		ddl = "CREATE TABLE IF NOT EXISTS t_schema_migration (version VARCHAR(255) NOT NULL PRIMARY KEY, applied_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+	}
+	if _, err := db.ExecContext(ctx, ddl); err != nil {
+		return fmt.Errorf("create migration table（应用账号无 DDL 权限，请先用管理员账号建表并登记版本）: %w", err)
+	}
+	return nil
+}
+
+func isMissingTable(err error) bool {
+	var me *mysql.MySQLError
+	if errors.As(err, &me) {
+		return me.Number == 1146
+	}
+	return strings.Contains(strings.ToLower(err.Error()), "no such table")
 }
 
 func apply(ctx context.Context, db *sql.DB, dialect, script string) error {

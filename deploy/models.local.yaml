@@ -14,3 +14,14 @@ models:
     protocol: demo
     demo: true
     max_tokens: 8192
+
+# 真实模型示例：取消注释即可热加载，无需重启；密钥只从环境变量读取。
+# 缺少环境变量时服务仍正常启动，发起对话会返回 LLM_NOT_CONFIGURED 并提示变量名。
+#  - id: deepseek
+#    name: DeepSeek
+#    desc: DeepSeek 官方 API
+#    tags: [cloud]
+#    protocol: openai
+#    base_url: https://api.deepseek.com/v1
+#    upstream_model: deepseek-chat
+#    api_key_env: DEEPSEEK_API_KEY

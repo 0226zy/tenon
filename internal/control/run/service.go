@@ -27,7 +27,10 @@ import (
 	"github.com/0226zy/tenon/pkg/contract"
 )
 
-type Catalog interface{ Validate(string) error }
+type Catalog interface {
+	Validate(string) error
+	CheckReady(string) error
+}
 type Sandbox interface {
 	Ensure(context.Context, string, string) (sandbox.Handle, error)
 	ForceStop(context.Context, string) error
@@ -99,6 +102,10 @@ func (s *Service) Accept(ctx context.Context, userID, convID string, req contrac
 			return nil
 		} else if !errors.Is(err, store.ErrNotFound) {
 			return err
+		}
+		// 凭证只在真正发起对话时检查：缺失不阻塞服务启动，但要给前端明确原因。
+		if err := s.catalog.CheckReady(model); err != nil {
+			return httpx.E(409, "LLM_NOT_CONFIGURED", err.Error())
 		}
 		if s.q.QueueLen(userID) >= s.cfg.Quota.Queue.PerUser {
 			return httpx.E(429, "QUOTA_EXCEEDED", "user Run queue is full")

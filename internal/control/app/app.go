@@ -66,9 +66,9 @@ type App struct {
 }
 
 func Open(ctx context.Context, cfg *config.Config) (_ *App, err error) {
-	dialect, dsn := "mysql", cfg.MySQL.DSN
-	if cfg.Mode == "local" {
-		dialect, dsn = "sqlite", cfg.SQLite.Path
+	dialect, dsn := cfg.Dialect(), cfg.SQLite.Path
+	if dialect == "mysql" {
+		dsn = cfg.MySQL.DSN
 	}
 	st, err := store.Open(ctx, dialect, dsn)
 	if err != nil {

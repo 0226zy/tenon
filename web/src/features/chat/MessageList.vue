@@ -92,7 +92,7 @@ onMounted(() => { void scrollToBottom(true) })
         {{ view.loadingOlder || paging ? '正在加载更早记录…' : '加载更早记录' }}
       </button>
     </div>
-    <div v-if="view.loading" class="message-skeleton" aria-label="正在恢复对话记录">
+    <div v-if="view.loading" class="message-skeleton" aria-label="正在恢复项目记录">
       <span v-for="index in 4" :key="index" />
     </div>
     <section v-else-if="!timeline.length" class="empty-chat">

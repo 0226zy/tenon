@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -43,9 +44,10 @@ type apiFixture struct {
 	events        *event.Store
 	mapper        event.Mapper
 	handler       http.Handler
+	catalogPath   string
 }
 
-func newAPIFixture(t *testing.T) *apiFixture {
+func newAPIFixture(t *testing.T, options ...func(*config.Config)) *apiFixture {
 	t.Helper()
 	st, err := store.Open(context.Background(), "sqlite", filepath.Join(t.TempDir(), "control.db"))
 	if err != nil {
@@ -62,6 +64,9 @@ func newAPIFixture(t *testing.T) *apiFixture {
 	cfg.Quota.Queue.Timeout = config.Duration{Duration: time.Second}
 	cfg.Event.SSEHeartbeat = config.Duration{Duration: 20 * time.Millisecond}
 	cfg.Event.WriteTimeout = config.Duration{Duration: time.Second}
+	for _, apply := range options {
+		apply(cfg)
+	}
 	catalogPath := filepath.Join(t.TempDir(), "models.yaml")
 	if err := os.WriteFile(catalogPath, []byte("models:\n  - id: local-demo\n    protocol: demo\n    demo: true\n    default: true\n"), 0o600); err != nil {
 		t.Fatal(err)
@@ -85,7 +90,7 @@ func newAPIFixture(t *testing.T) *apiFixture {
 	previews := preview.NewService(st, sandboxes, agent, cfg, tickets)
 	users := auth.New(st, ids, cfg.Auth)
 	handler := NewRouter(Dependencies{Auth: users, Catalog: catalog, Conversations: conversations, Runs: runs, Events: events, Hub: hub, Mapper: mapper, Files: workspaceFiles, Preview: previews, Config: cfg})
-	f := &apiFixture{st: st, cfg: cfg, auth: users, conversations: conversations, runs: runs, hub: hub, events: events, mapper: mapper, handler: handler}
+	f := &apiFixture{st: st, cfg: cfg, auth: users, conversations: conversations, runs: runs, hub: hub, events: events, mapper: mapper, handler: handler, catalogPath: catalogPath}
 	t.Cleanup(func() {
 		runs.Close()
 		_ = sandboxes.Close()
@@ -387,5 +392,196 @@ func TestNonGETRequiresAllowedOrigin(t *testing.T) {
 	f.handler.ServeHTTP(response, req)
 	if response.Code != http.StatusForbidden {
 		t.Fatalf("cross-site status=%d", response.Code)
+	}
+}
+
+func sessionCookie(t *testing.T, f *apiFixture, recorder *httptest.ResponseRecorder) *http.Cookie {
+	t.Helper()
+	for _, cookie := range recorder.Result().Cookies() {
+		if cookie.Name == f.cfg.Auth.CookieName {
+			return cookie
+		}
+	}
+	t.Fatal("session cookie was not set")
+	return nil
+}
+
+func TestRegisterIssuesSessionAndLimitsAbuse(t *testing.T) {
+	f := newAPIFixture(t, func(cfg *config.Config) {
+		cfg.Auth.RegisterLimit = 2
+		cfg.Auth.RegisterWindow = config.Duration{Duration: time.Hour}
+	})
+
+	created := f.request(t, nil, http.MethodPost, "/api/register", `{"username":"carol","password":"password-carol","name":"Carol"}`)
+	if created.Code != http.StatusCreated || !strings.Contains(created.Body.String(), `"user_id":"carol"`) {
+		t.Fatalf("register=%d %s", created.Code, created.Body.String())
+	}
+	cookie := sessionCookie(t, f, created)
+	me := f.request(t, cookie, http.MethodGet, "/api/me", "")
+	if me.Code != http.StatusOK || !strings.Contains(me.Body.String(), "Carol") {
+		t.Fatalf("registered session me=%d %s", me.Code, me.Body.String())
+	}
+	// 注册后可直接用密码登录，说明账号与密码哈希真实落库。
+	loginReq := httptest.NewRequest(http.MethodPost, "/api/login", strings.NewReader(`{"username":"carol","password":"password-carol"}`))
+	loginReq.Header.Set("Origin", f.cfg.Web.Origin)
+	loginResponse := httptest.NewRecorder()
+	f.handler.ServeHTTP(loginResponse, loginReq)
+	if loginResponse.Code != http.StatusNoContent {
+		t.Fatalf("login after register=%d %s", loginResponse.Code, loginResponse.Body.String())
+	}
+
+	for _, tc := range []struct {
+		name string
+		body string
+		code int
+		text string
+	}{
+		{"duplicate", `{"username":"carol","password":"password-other"}`, http.StatusConflict, "USER_EXISTS"},
+		{"weak password", `{"username":"dave","password":"short"}`, http.StatusBadRequest, "WEAK_PASSWORD"},
+		{"long password", `{"username":"dave","password":"` + strings.Repeat("a", 129) + `"}`, http.StatusBadRequest, "LONG_PASSWORD"},
+		{"invalid username", `{"username":"bad name","password":"password-dave"}`, http.StatusBadRequest, "BAD_USER"},
+		{"long name", `{"username":"dave","password":"password-dave","name":"` + strings.Repeat("名", 65) + `"}`, http.StatusBadRequest, "BAD_NAME"},
+	} {
+		got := f.request(t, nil, http.MethodPost, "/api/register", tc.body)
+		if got.Code != tc.code || !strings.Contains(got.Body.String(), tc.text) {
+			t.Errorf("%s status=%d body=%s", tc.name, got.Code, got.Body.String())
+		}
+	}
+
+	// 限流按来源地址计数：前面已有一次成功注册和一次重名请求，第三次直接 429。
+	limited := f.request(t, nil, http.MethodPost, "/api/register", `{"username":"erin","password":"password-erin"}`)
+	if limited.Code != http.StatusTooManyRequests || limited.Header().Get("Retry-After") == "" {
+		t.Fatalf("rate limited=%d headers=%v body=%s", limited.Code, limited.Header(), limited.Body.String())
+	}
+
+	csrf := httptest.NewRequest(http.MethodPost, "/api/register", bytes.NewBufferString(`{"username":"frank","password":"password-frank"}`))
+	csrf.Header.Set("Origin", "https://evil.example")
+	csrfResponse := httptest.NewRecorder()
+	f.handler.ServeHTTP(csrfResponse, csrf)
+	if csrfResponse.Code != http.StatusForbidden {
+		t.Fatalf("cross-origin register=%d", csrfResponse.Code)
+	}
+}
+
+func TestRegisterDefaultsNameAndRejectsBlank(t *testing.T) {
+	f := newAPIFixture(t)
+	created := f.request(t, nil, http.MethodPost, "/api/register", `{"username":"grace","password":"password-grace","name":"   "}`)
+	if created.Code != http.StatusCreated || !strings.Contains(created.Body.String(), `"name":"grace"`) {
+		t.Fatalf("blank name register=%d %s", created.Code, created.Body.String())
+	}
+	blank := f.request(t, nil, http.MethodPost, "/api/register", `{"username":"","password":"password-grace"}`)
+	if blank.Code != http.StatusBadRequest {
+		t.Fatalf("blank username register=%d %s", blank.Code, blank.Body.String())
+	}
+}
+
+func TestModelReadinessAndAcceptRejectsUnconfiguredLLM(t *testing.T) {
+	f := newAPIFixture(t)
+	f.createUser(t, "alice")
+	cookie := f.login(t, "alice")
+
+	created := f.request(t, cookie, http.MethodPost, "/api/conversations", `{}`)
+	if created.Code != http.StatusCreated {
+		t.Fatalf("create=%d %s", created.Code, created.Body.String())
+	}
+	var conv contract.ConversationView
+	if err := json.Unmarshal(created.Body.Bytes(), &conv); err != nil {
+		t.Fatal(err)
+	}
+
+	// 热更新目录：新增一个需要环境变量的真实模型。
+	catalogYAML := `models:
+  - id: local-demo
+    protocol: demo
+    demo: true
+    default: true
+  - id: deepseek
+    name: DeepSeek
+    protocol: openai
+    base_url: https://api.deepseek.com/v1
+    api_key_env: TENON_TEST_DEEPSEEK_KEY
+`
+	if err := os.WriteFile(f.catalogPath, []byte(catalogYAML), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	readiness := func() contract.ModelView {
+		t.Helper()
+		response := f.request(t, cookie, http.MethodGet, "/api/models", "")
+		if response.Code != http.StatusOK {
+			t.Fatalf("models=%d %s", response.Code, response.Body.String())
+		}
+		var views []contract.ModelView
+		if err := json.Unmarshal(response.Body.Bytes(), &views); err != nil {
+			t.Fatal(err)
+		}
+		for _, view := range views {
+			if view.ID == "deepseek" {
+				return view
+			}
+		}
+		t.Fatal("deepseek model missing from hot-reloaded catalog")
+		return contract.ModelView{}
+	}
+	if view := readiness(); view.Ready || view.MissingEnv != "TENON_TEST_DEEPSEEK_KEY" {
+		t.Fatalf("missing-key readiness=%+v", view)
+	}
+
+	body := `{"client_request_id":"llm-check","content":"hello","model":"deepseek"}`
+	rejected := f.request(t, cookie, http.MethodPost, "/api/conversations/"+conv.ID+"/messages", body)
+	if rejected.Code != http.StatusConflict ||
+		!strings.Contains(rejected.Body.String(), "LLM_NOT_CONFIGURED") ||
+		!strings.Contains(rejected.Body.String(), "TENON_TEST_DEEPSEEK_KEY") {
+		t.Fatalf("unconfigured accept=%d %s", rejected.Code, rejected.Body.String())
+	}
+
+	t.Setenv("TENON_TEST_DEEPSEEK_KEY", "test-key")
+	if view := readiness(); !view.Ready || view.MissingEnv != "" {
+		t.Fatalf("configured readiness=%+v", view)
+	}
+	accepted := f.request(t, cookie, http.MethodPost, "/api/conversations/"+conv.ID+"/messages", body)
+	if accepted.Code != http.StatusAccepted {
+		t.Fatalf("configured accept=%d %s", accepted.Code, accepted.Body.String())
+	}
+}
+
+func TestEmptyConversationHasNoWorkspaceAndNoSandbox(t *testing.T) {
+	f := newAPIFixture(t)
+	f.createUser(t, "alice")
+	cookie := f.login(t, "alice")
+
+	created := f.request(t, cookie, http.MethodPost, "/api/conversations", `{}`)
+	if created.Code != http.StatusCreated {
+		t.Fatalf("create=%d %s", created.Code, created.Body.String())
+	}
+	var conv contract.ConversationView
+	if err := json.Unmarshal(created.Body.Bytes(), &conv); err != nil {
+		t.Fatal(err)
+	}
+
+	// 新建对话不应有工作区：文件树为空、预览 none，且不会趁机创建沙箱。
+	tree := f.request(t, cookie, http.MethodGet, "/api/conversations/"+conv.ID+"/files/tree?path=", "")
+	if tree.Code != http.StatusOK || strings.TrimSpace(tree.Body.String()) != "[]" {
+		t.Fatalf("empty tree=%d %s", tree.Code, tree.Body.String())
+	}
+	preview := f.request(t, cookie, http.MethodGet, "/api/conversations/"+conv.ID+"/preview", "")
+	if preview.Code != http.StatusOK || !strings.Contains(preview.Body.String(), `"status":"none"`) {
+		t.Fatalf("empty preview=%d %s", preview.Code, preview.Body.String())
+	}
+	if _, err := f.st.Sandbox(context.Background(), f.st.DB(), conv.ID); !errors.Is(err, store.ErrNotFound) {
+		t.Fatalf("sandbox should not be provisioned before first Run: %v", err)
+	}
+
+	// 已回收（status=5）的沙箱同样视为没有工作区：不能自动重启，也不能露出旧目录。
+	removed := &store.Sandbox{ConvID: conv.ID, InstID: "removed", Status: 5, LastActiveAt: time.Now().UTC()}
+	if err := f.st.PutSandbox(context.Background(), f.st.DB(), removed); err != nil {
+		t.Fatal(err)
+	}
+	tree = f.request(t, cookie, http.MethodGet, "/api/conversations/"+conv.ID+"/files/tree?path=", "")
+	if tree.Code != http.StatusOK || strings.TrimSpace(tree.Body.String()) != "[]" {
+		t.Fatalf("removed sandbox tree=%d %s", tree.Code, tree.Body.String())
+	}
+	preview = f.request(t, cookie, http.MethodGet, "/api/conversations/"+conv.ID+"/preview", "")
+	if preview.Code != http.StatusOK || !strings.Contains(preview.Body.String(), `"status":"none"`) {
+		t.Fatalf("removed sandbox preview=%d %s", preview.Code, preview.Body.String())
 	}
 }

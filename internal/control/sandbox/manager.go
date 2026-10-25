@@ -324,6 +324,11 @@ func (m *Manager) Loops(ctx context.Context) {
 		case <-t.C:
 			items, _ := m.st.ListSandboxes(ctx)
 			for _, b := range items {
+				// 启动过程中控制层重启/崩溃会留下 creating 行，超过启动窗口后标记为 stopped。
+				if b.Status == 1 && time.Since(b.ModifiedAt) > m.cfg.Sandbox.StartTimeout.Duration+time.Minute {
+					_ = m.st.RevokeSandbox(ctx, m.st.DB(), b.ConvID, 3)
+					continue
+				}
 				if b.Status != 2 {
 					continue
 				}
