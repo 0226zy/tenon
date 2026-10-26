@@ -76,7 +76,7 @@ export interface ChatView {
   progress?: string
   delta: Record<string, string>
   changedFiles: Set<string>
-  preview?: PreviewBrief & { error_code?: string }
+  preview?: PreviewBrief & { error_code?: string; log_tail?: string }
   eventCursor: string
   hasMoreEvents: boolean
   loaded: boolean
@@ -268,9 +268,11 @@ function applyItem(view: ChatView, frame: UIFrame, item: UIItem, index: number, 
       if (!current || item.data.generation >= current.generation) {
         view.preview = {
           status: item.data.status,
+          phase: item.data.phase,
           generation: item.data.generation,
           commit: item.data.commit,
           error_code: item.data.error_code,
+          log_tail: item.data.log_tail,
         }
       }
       return

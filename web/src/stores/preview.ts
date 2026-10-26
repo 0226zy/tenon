@@ -2,7 +2,7 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { api } from '@/api'
 import { ApiError } from '@/api/errors'
-import type { PreviewStatus, PreviewView } from '@/types/contract'
+import type { PreviewPhase, PreviewStatus, PreviewView } from '@/types/contract'
 
 const MAX_LOG_BYTES = 128 * 1024
 const requestVersions = new Map<string, number>()
@@ -10,6 +10,9 @@ const pollTimers = new Map<string, number>()
 
 export interface PreviewConvState {
   status: PreviewStatus
+  phase: PreviewPhase
+  phaseStartedAt: number
+  logTail: string
   generation: number
   commit: string
   stale: boolean
@@ -29,7 +32,7 @@ export interface PreviewConvState {
 
 export function emptyPreviewState(): PreviewConvState {
   return {
-    status: 'none', generation: 0, commit: '', stale: false, errorCode: '',
+    status: 'none', phase: '', phaseStartedAt: 0, logTail: '', generation: 0, commit: '', stale: false, errorCode: '',
     loading: false, restarting: false, displayedGeneration: 0, displayedUrl: '',
     displayedCommit: '', latestRunGeneration: 0, logs: '', logsLoading: false,
     logsOpen: false, logsTruncated: false,
@@ -39,9 +42,14 @@ export function emptyPreviewState(): PreviewConvState {
 /** 纯合并函数：响应乱序或 generation 回退时，不覆盖当前展示版本。 */
 export function mergePreviewState(current: PreviewConvState, incoming: PreviewView & { error_code?: string }): PreviewConvState {
   if (incoming.generation < current.generation) return { ...current, loading: false }
+  const phase: PreviewPhase = incoming.phase || (incoming.status === 'starting' ? 'starting' : incoming.status === 'ready' ? 'ready' : incoming.status === 'failed' ? 'failed' : '')
+  const phaseChanged = phase !== current.phase || incoming.status !== current.status || incoming.generation !== current.generation
   const next: PreviewConvState = {
     ...current,
     status: incoming.status,
+    phase,
+    phaseStartedAt: phaseChanged ? Date.now() : current.phaseStartedAt,
+    logTail: incoming.log_tail ?? current.logTail,
     generation: incoming.generation,
     commit: incoming.commit || current.commit,
     stale: incoming.stale || incoming.generation < current.latestRunGeneration,
@@ -102,9 +110,11 @@ export const usePreviewStore = defineStore('preview', () => {
 
   function applyEvent(cid: string, data: {
     status: PreviewStatus
+    phase?: PreviewPhase
     generation: number
     commit?: string
     error_code?: string
+    log_tail?: string
   }): void {
     const state = ensure(cid)
     if (data.generation < state.generation) return
@@ -117,8 +127,10 @@ export const usePreviewStore = defineStore('preview', () => {
       status: data.status,
       generation: data.generation,
       commit: data.commit,
+      phase: data.phase,
       stale: state.stale,
       error_code: data.error_code,
+      log_tail: data.log_tail,
     }))
     if (needsTicket) {
       // temp 事件不含一次性票据；只有尚未展示的版本才需要重新换取。
@@ -151,6 +163,8 @@ export const usePreviewStore = defineStore('preview', () => {
       const response = await api.preview.restart(cid)
       if (response) Object.assign(state, mergePreviewState(state, response))
       state.status = 'starting'
+      state.phase = 'starting'
+      state.phaseStartedAt = Date.now()
       schedulePoll(cid, Date.now())
     } catch (error) {
       state.restarting = false
@@ -168,16 +182,18 @@ export const usePreviewStore = defineStore('preview', () => {
     if (!opened) throw new ApiError({ code: 'POPUP_BLOCKED', status: 0 })
   }
 
-  async function loadLogs(cid: string): Promise<void> {
+  async function loadLogs(cid: string, quiet = false): Promise<void> {
     const state = ensure(cid)
-    state.logsOpen = true
-    state.logsLoading = true
+    if (!quiet) {
+      state.logsOpen = true
+      state.logsLoading = true
+    }
     try {
       const result = tailByBytes(await api.preview.logs(cid, 200))
       state.logs = result.text || '暂无日志'
       state.logsTruncated = result.truncated
     } catch (error) {
-      state.logs = error instanceof Error ? error.message : String(error)
+      if (!quiet) state.logs = error instanceof Error ? error.message : String(error)
     } finally {
       state.logsLoading = false
     }

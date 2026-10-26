@@ -63,6 +63,7 @@ func (s *Service) Entry(ctx context.Context, userID, convID string) (contract.Pr
 	if status != 2 {
 		s.sb.EnsureAsync(convID)
 		view.Status = "starting"
+		view.Phase = "starting"
 	} else {
 		st, err := s.ac.PreviewStatus(ctx, h)
 		if err != nil {
@@ -78,8 +79,15 @@ func (s *Service) Entry(ctx context.Context, userID, convID string) (contract.Pr
 			return view, err
 		}
 		view.Status = st.Status
+		view.Phase = st.Phase
 		view.Commit = st.Commit
 		view.Generation = st.Generation
+		view.ErrorCode = st.ErrorCode
+		if len(st.LogTail) > 4096 {
+			view.LogTail = st.LogTail[len(st.LogTail)-4096:]
+		} else {
+			view.LogTail = st.LogTail
+		}
 	}
 	view.Stale = expectedGeneration > view.Generation
 	if r, err := s.st.ActiveRun(ctx, s.st.DB(), convID); err == nil {

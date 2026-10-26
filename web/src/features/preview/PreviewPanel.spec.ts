@@ -42,7 +42,7 @@ describe('PreviewPanel 休眠唤醒', () => {
     expect(entry).toHaveBeenCalledTimes(1)
     expect(preview.ensure('c1').status).toBe('starting')
     expect(wrapper.get('iframe').attributes('src')).toBe('https://preview.test/v1')
-    expect(wrapper.get('.preview-status').text()).toContain('构建中')
+    expect(wrapper.get('.preview-status').text()).toContain('启动中')
     expect(wrapper.get('.preview-stale').text()).toBe('旧版本')
 
     await vi.advanceTimersByTimeAsync(5000)

@@ -82,4 +82,27 @@ describe('预览 generation fencing', () => {
     expect(state.logs).not.toContain('old-marker')
     expect(state.logs.endsWith('final-log-line')).toBe(true)
   })
+
+  it('合并构建阶段、错误码与失败日志尾部', () => {
+    let state = mergePreviewState(emptyPreviewState(), {
+      status: 'starting', phase: 'building', generation: 3, stale: false,
+    })
+    expect(state.phase).toBe('building')
+    expect(state.phaseStartedAt).toBeGreaterThan(0)
+
+    state = mergePreviewState(state, {
+      status: 'starting', phase: 'healthcheck', generation: 3, stale: false,
+    })
+    expect(state.phase).toBe('healthcheck')
+
+    state = mergePreviewState(state, {
+      status: 'failed', phase: 'failed', generation: 3, stale: false,
+      error_code: 'BUILD_FAILED', log_tail: 'vite build failed',
+    })
+    expect(state.status).toBe('failed')
+    expect(state.errorCode).toBe('BUILD_FAILED')
+    expect(state.logTail).toBe('vite build failed')
+    expect(state.displayedUrl).toBe('')
+  })
+
 })

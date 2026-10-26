@@ -194,10 +194,13 @@ type RunEnd struct {
 
 type PreviewView struct {
 	Status     string `json:"status"`
+	Phase      string `json:"phase,omitempty"`
 	URL        string `json:"url,omitempty"`
 	Commit     string `json:"commit,omitempty"`
 	Generation int64  `json:"generation"`
 	Stale      bool   `json:"stale"`
+	ErrorCode  string `json:"error_code,omitempty"`
+	LogTail    string `json:"log_tail,omitempty"`
 }
 
 type Page[T any] struct {

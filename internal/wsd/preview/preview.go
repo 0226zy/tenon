@@ -112,7 +112,7 @@ func New(cfg Config, g *gate.Gate, p *procregistry.Registry, cp *cpclient.Client
 			CheckRedirect: func(_ *http.Request, _ []*http.Request) error { return http.ErrUseLastResponse },
 		},
 	}
-	s.state = contract.PreviewState{Status: "none", URLPath: "/"}
+	s.state = contract.PreviewState{Status: "none", Phase: "", URLPath: "/"}
 	return s
 }
 
@@ -249,7 +249,7 @@ func (s *Supervisor) runBuild(ctx context.Context, req EnsureReq, runID string) 
 	if req.Generation == s.state.Generation {
 		restarts = s.state.Restarts
 	}
-	s.state = contract.PreviewState{Status: "starting", Generation: req.Generation, Commit: req.Commit, URLPath: "/", Restarts: restarts}
+	s.state = contract.PreviewState{Status: "starting", Phase: "building", Generation: req.Generation, Commit: req.Commit, URLPath: "/", Restarts: restarts}
 	state := cloneState(s.state)
 	s.mu.Unlock()
 	s.publish(state)
@@ -302,6 +302,11 @@ func (s *Supervisor) runBuild(ctx context.Context, req EnsureReq, runID string) 
 	if err != nil {
 		return s.fail(req, "BUILD_FAILED", "could not start start.sh"), nil
 	}
+	s.mu.Lock()
+	s.state.Phase = "starting"
+	starting := cloneState(s.state)
+	s.mu.Unlock()
+	s.publish(starting)
 	state, ready := s.probeUntilReady(ctx, child, req, port)
 	if !ready {
 		s.stopChild(child)
@@ -412,11 +417,15 @@ func (s *Supervisor) probeUntilReady(ctx context.Context, c *child, req EnsureRe
 	url := "http://127.0.0.1:" + strconv.Itoa(port) + "/"
 	ticker := time.NewTicker(s.cfg.ProbeInterval)
 	defer ticker.Stop()
-	state := s.Status()
+	s.mu.Lock()
+	s.state.Phase = "healthcheck"
+	state := cloneState(s.state)
+	s.mu.Unlock()
 	state.LocalPort = 0
 	if s.cfg.Local {
 		state.LocalPort = port
 	}
+	s.publish(state)
 	for {
 		started := time.Now()
 		code := s.probeOnce(buildCtx, url)
@@ -430,11 +439,13 @@ func (s *Supervisor) probeUntilReady(ctx context.Context, c *child, req EnsureRe
 			case <-c.done:
 				s.mu.Unlock()
 				state.Status = "failed"
+				state.Phase = "failed"
 				state.ErrorCode = "BUILD_FAILED"
 				return state, false
 			default:
 			}
 			state.Status = "ready"
+			state.Phase = "ready"
 			state.ErrorCode = ""
 			state.LogTail = string(s.Logs(20))
 			s.state = cloneState(state)
@@ -445,10 +456,12 @@ func (s *Supervisor) probeUntilReady(ctx context.Context, c *child, req EnsureRe
 		select {
 		case <-buildCtx.Done():
 			state.Status = "failed"
+			state.Phase = "failed"
 			state.ErrorCode = "PREVIEW_TIMEOUT"
 			return state, false
 		case <-c.done:
 			state.Status = "failed"
+			state.Phase = "failed"
 			state.ErrorCode = "BUILD_FAILED"
 			return state, false
 		case <-ticker.C:
@@ -490,6 +503,7 @@ func (s *Supervisor) monitor(c *child) {
 	}
 	s.state.Restarts++
 	s.state.Status = "starting"
+	s.state.Phase = "starting"
 	req := EnsureReq{Generation: s.state.Generation, Commit: s.state.Commit, Wait: s.cfg.BuildTimeout, force: true}
 	state := cloneState(s.state)
 	// Serialize Add with Stop's transition to stopping.
@@ -506,6 +520,7 @@ func (s *Supervisor) fail(req EnsureReq, code, log string) contract.PreviewState
 	_, _ = s.logs.Write([]byte(log + "\n"))
 	state := s.Status()
 	state.Status = "failed"
+	state.Phase = "failed"
 	state.Generation = req.Generation
 	state.Commit = req.Commit
 	state.URLPath = "/"
@@ -528,7 +543,7 @@ func (s *Supervisor) publish(state contract.PreviewState) {
 	}
 	s.bus.Publish("preview_status", map[string]any{
 		"status": state.Status, "generation": state.Generation, "commit": state.Commit,
-		"restarts": state.Restarts, "error_code": state.ErrorCode,
+		"restarts": state.Restarts, "error_code": state.ErrorCode, "phase": state.Phase,
 	})
 }
 
@@ -586,7 +601,7 @@ func (s *Supervisor) Stop(ctx context.Context) error {
 	case <-ctx.Done():
 	}
 	s.mu.Lock()
-	s.state = contract.PreviewState{Status: "none", URLPath: "/"}
+	s.state = contract.PreviewState{Status: "none", Phase: "", URLPath: "/"}
 	s.mu.Unlock()
 	return err
 }

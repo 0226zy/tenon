@@ -147,7 +147,7 @@ func (m Mapper) TempToUI(runID, kind string, data any) (contract.UIFrame, bool) 
 		f.Items = append(f.Items, contract.UIItem{Key: "files", Type: "files_changed", Data: map[string]any{"paths": data}})
 	case "preview_status":
 		if v, ok := data.(contract.PreviewState); ok {
-			f.Items = append(f.Items, contract.UIItem{Key: "preview", Type: "preview_status", Data: map[string]any{"status": v.Status, "generation": v.Generation, "commit": v.Commit}})
+			f.Items = append(f.Items, contract.UIItem{Key: "preview", Type: "preview_status", Data: map[string]any{"status": v.Status, "phase": v.Phase, "generation": v.Generation, "commit": v.Commit, "error_code": v.ErrorCode}})
 		}
 	default:
 		return f, false

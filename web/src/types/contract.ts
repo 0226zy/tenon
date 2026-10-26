@@ -11,6 +11,7 @@ export type RunStatus =
 
 export type ConvStatus = 'idle' | 'queued' | 'running' | 'error'
 export type PreviewStatus = 'none' | 'starting' | 'ready' | 'failed'
+export type PreviewPhase = '' | 'building' | 'starting' | 'healthcheck' | 'ready' | 'failed'
 export type FileChangeKind = 'A' | 'M' | 'D'
 
 export interface LoginRequest { username: string; password: string }
@@ -29,8 +30,10 @@ export interface ModelView {
 export interface RunBrief { run_id: string; status: RunStatus }
 export interface PreviewBrief {
   status: PreviewStatus
+  phase?: PreviewPhase
   commit?: string
   generation: number
+  error_code?: string
 }
 export interface ConversationView {
   id: string
@@ -93,10 +96,13 @@ export interface RunEnd {
 }
 export interface PreviewView {
   status: PreviewStatus
+  phase?: PreviewPhase
   url?: string
   commit?: string
   generation: number
   stale: boolean
+  error_code?: string
+  log_tail?: string
 }
 export interface Page<T> { items: T[]; next_cursor: string }
 export interface EventRecord {
@@ -125,7 +131,7 @@ export type UIItem =
   | { key: string; type: 'progress'; data: { text: string } }
   | { key: string; type: 'text_delta'; data: { text: string } }
   | { key: string; type: 'files_changed'; data: { paths: string[] } }
-  | { key: string; type: 'preview_status'; data: { status: PreviewStatus; generation: number; commit?: string; error_code?: string } }
+  | { key: string; type: 'preview_status'; data: { status: PreviewStatus; phase?: PreviewPhase; generation: number; commit?: string; error_code?: string; log_tail?: string } }
 
 export interface UIFrame {
   seq?: number

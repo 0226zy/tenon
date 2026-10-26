@@ -60,6 +60,10 @@ func TestHandlerRejectsMissingInvalidReplayedAndCrossSessionAuthorization(t *tes
 
 	if got := request("/", hostOne, nil); got.Code != http.StatusUnauthorized {
 		t.Fatalf("missing preview authorization=%d %s", got.Code, got.Body.String())
+	} else if got.Header().Get("X-Content-Type-Options") != "nosniff" {
+		t.Fatalf("preview missing nosniff header")
+	} else if got.Header().Get("Content-Security-Policy") != "frame-ancestors "+cfg.Web.Origin {
+		t.Fatalf("preview frame-ancestors=%q", got.Header().Get("Content-Security-Policy"))
 	}
 	if got := request("/", hostOne, &http.Cookie{Name: CookieName, Value: "invalid"}); got.Code != http.StatusUnauthorized {
 		t.Fatalf("invalid preview cookie=%d %s", got.Code, got.Body.String())

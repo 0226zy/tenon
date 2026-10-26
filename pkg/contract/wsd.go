@@ -66,6 +66,7 @@ type FileContent struct {
 
 type PreviewState struct {
 	Status     string `json:"status"`
+	Phase      string `json:"phase,omitempty"`
 	Generation int64  `json:"generation"`
 	Commit     string `json:"commit,omitempty"`
 	URLPath    string `json:"url_path"`
@@ -123,8 +124,8 @@ type SandboxModel struct {
 type SandboxConfig struct {
 	Models []SandboxModel `json:"models"`
 	Agent  struct {
-		MaxIterations          int `json:"max_iterations"`
-		TokenBudgetPerTurn     int `json:"token_budget_per_turn"`
+		MaxIterations           int `json:"max_iterations"`
+		TokenBudgetPerTurn      int `json:"token_budget_per_turn"`
 		ContextCompressAtTokens int `json:"context_compress_at_tokens"`
 	} `json:"agent"`
 	SystemPromptAppend string `json:"system_prompt_append,omitempty"`

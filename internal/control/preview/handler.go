@@ -32,6 +32,12 @@ func NewHandler(st *store.Store, sb *sandbox.Manager, ac *agentclient.Client, ti
 	return &Handler{st: st, sb: sb, ac: ac, tickets: tickets, master: master, cfg: cfg, transport: http.DefaultTransport}
 }
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// 预览应用只允许主站嵌入，且不把 URL/Referer 带给生成应用。
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Header().Set("Referrer-Policy", "no-referrer")
+	if h.cfg.Web.Origin != "" {
+		w.Header().Set("Content-Security-Policy", "frame-ancestors "+h.cfg.Web.Origin)
+	}
 	key, ok := h.previewKey(r.Host)
 	if !ok {
 		httpx.WriteError(w, httpx.E(404, "NOT_FOUND", "preview not found"))
